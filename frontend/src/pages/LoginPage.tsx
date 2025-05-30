@@ -7,6 +7,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // já deve estar no topo
 
 export default function LoginPage() {
   const theme = useTheme();
@@ -16,6 +17,10 @@ export default function LoginPage() {
   const [isValidEmail, setIsValidEmail] = useState(false);
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [code, setCode] = useState('');
+
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
+
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -34,14 +39,18 @@ export default function LoginPage() {
     setStep('email');
   };
 
-  const handleCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setCode(event.target.value);
-  };
+    const handleCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = event.target.value.replace(/\D/g, ''); // remove tudo que não for número
+    setCode(numericValue);
+    };
 
   const handleValidateCode = () => {
-    // aqui você colocaria a validação real do código
-    console.log('Código informado:', code);
-  };
+  if (code === '123456') {
+    navigate('/home');
+  } else {
+    setErrorMessage('Código inválido. Tente novamente.');
+  }
+};
 
   return (
     <Box
@@ -140,6 +149,12 @@ export default function LoginPage() {
                   value={code}
                   onChange={handleCodeChange}
                 />
+                {errorMessage && (
+  <Typography color="error" variant="body2" mt={1}>
+    {errorMessage}
+  </Typography>
+)}
+
 
                 <Box mt={2} display="flex" gap={2}>
                   <Button
@@ -147,9 +162,11 @@ export default function LoginPage() {
                     color="primary"
                     fullWidth
                     onClick={handleValidateCode}
-                  >
+                    disabled={code.length !== 6}
+                    >
                     Validar
-                  </Button>
+                    </Button>
+
 
                   <Button
                     variant="outlined"

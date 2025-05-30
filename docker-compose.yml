@@ -1,5 +1,8 @@
+version: '3.9'
+
 services:
   app:
+    container_name: classhero_frontend
     build:
       context: ./frontend
     ports:
@@ -7,4 +10,17 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    working_dir: /app
     command: npm run dev
+
+  api:
+    container_name: classhero_backend
+    build:
+      context: ./backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run start:dev
