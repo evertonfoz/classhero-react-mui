@@ -21,6 +21,8 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import HomeIcon from '@mui/icons-material/Home';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLayout } from '../context/LayoutContext';
@@ -57,14 +59,30 @@ export default function HomePage() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        py: 2,
-        px: 1,
+        py: 0,
+        px: 0,
       }}
     >
       <Box>
-        <Box display="flex" alignItems="center" gap={1} px={1}>
-          <IconButton onClick={handleDrawerToggle}>
-            <MenuIcon />
+        {/* Topo: Menu + Título sem margens */}
+        <Box
+          sx={{
+            backgroundColor: '#e6e6e6',
+            borderBottom: '1px solid #ccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            gap: 1,
+            pl: 0.5,
+            pr: 0,
+            py: 1,
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            m: 0,
+          }}
+        >
+          <IconButton onClick={handleDrawerToggle} size="small">
+            <MenuIcon fontSize="small" />
           </IconButton>
           {isSidebarOpen && (
             <Typography variant="h6" fontWeight="bold" noWrap>
@@ -73,28 +91,86 @@ export default function HomePage() {
           )}
         </Box>
 
-        <Divider sx={{ my: 2, borderColor: '#ccc' }} />
-
+        {/* Bloco Perfil sem espaço abaixo */}
         <Box
-          onClick={() => navigate('/home/usuarios')}
+          onClick={() => navigate('/home/perfil')}
           sx={{
-            mt: 3,
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
+            gap: 1.5,
             cursor: 'pointer',
             px: 1,
+            py: 1,
+            borderRadius: 2,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: '#e6e6e6',
+            },
           }}
         >
-          <Tooltip title="Usuários">
-            <IconButton>
-              <PeopleAltIcon />
-            </IconButton>
-          </Tooltip>
-          {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
+          <AccountCircleIcon fontSize="medium" sx={{ color: '#555' }} />
+          {isSidebarOpen && (
+            <Box>
+              <Typography variant="body2" fontWeight="bold">
+                Meu Perfil
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                user@exemplo.com
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        <Divider sx={{ my: 0, borderColor: '#ccc' }} />
+
+        {/* Itens de navegação SEM espaço entre eles */}
+        <Box  display="flex" flexDirection="column" gap={0}>
+          <Box
+    onClick={() => navigate('/home')}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      cursor: 'pointer',
+      px: 1,
+      py: 0,
+      borderRadius: 2,
+      '&:hover': { backgroundColor: '#e0e0e0' },
+    }}
+  >
+    <Tooltip title="Início">
+      <IconButton>
+        <HomeIcon />
+      </IconButton>
+    </Tooltip>
+    {isSidebarOpen && <Typography variant="body2">Início</Typography>}
+  </Box>
+
+  {/* Item Usuários */}
+  <Box
+    onClick={() => navigate('/home/usuarios')}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      cursor: 'pointer',
+      px: 1,
+      py: 0,
+      borderRadius: 2,
+      '&:hover': { backgroundColor: '#e0e0e0' },
+    }}
+  >
+    <Tooltip title="Usuários">
+      <IconButton>
+        <PeopleAltIcon />
+      </IconButton>
+    </Tooltip>
+    {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
+  </Box>
         </Box>
       </Box>
 
+      {/* Botão Sair */}
       <Box
         display="flex"
         alignItems="center"
@@ -110,6 +186,9 @@ export default function HomePage() {
             gap: 1,
             cursor: 'pointer',
             px: 1,
+            py: 1,
+            borderRadius: 2,
+            '&:hover': { backgroundColor: '#e0e0e0' },
           }}
         >
           <Tooltip title="Sair">
