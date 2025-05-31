@@ -10,10 +10,17 @@ import {
   useTheme,
   AppBar,
   Toolbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 const collapsedWidth = 64;
@@ -23,7 +30,9 @@ export default function HomePage() {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleDrawerToggle = () => {
     if (isDesktop) {
@@ -34,7 +43,12 @@ export default function HomePage() {
   };
 
   const handleLogout = () => {
-    navigate('/login');
+    setDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setDialogOpen(false);
+    logout();
   };
 
   const drawerContent = (
@@ -67,16 +81,27 @@ export default function HomePage() {
         px={1}
         mt="auto"
       >
-        <Tooltip title="Sair">
-          <IconButton onClick={handleLogout}>
-            <LogoutIcon />
-          </IconButton>
-        </Tooltip>
-        {desktopOpen && (
-          <Typography variant="body2" ml={1}>
-            Sair
-          </Typography>
-        )}
+        <Box
+          onClick={handleLogout}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            px: 1,
+          }}
+        >
+          <Tooltip title="Sair">
+            <IconButton>
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+          {desktopOpen && (
+            <Typography variant="body2">
+              Sair
+            </Typography>
+          )}
+        </Box>
       </Box>
     </Box>
   );
@@ -85,7 +110,6 @@ export default function HomePage() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
 
-      {/* AppBar com botão de menu no mobile */}
       {!isDesktop && (
         <AppBar position="fixed" color="inherit" elevation={0}>
           <Toolbar>
@@ -99,7 +123,6 @@ export default function HomePage() {
         </AppBar>
       )}
 
-      {/* Drawer lateral */}
       <Drawer
         variant={isDesktop ? 'permanent' : 'temporary'}
         open={isDesktop ? desktopOpen : mobileOpen}
@@ -117,7 +140,6 @@ export default function HomePage() {
         {drawerContent}
       </Drawer>
 
-      {/* Conteúdo principal */}
       <Box
         component="main"
         sx={{
@@ -140,6 +162,56 @@ export default function HomePage() {
           }}
         />
       </Box>
+
+      {/* Dialog estilizado */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+            backgroundColor: '#fefefe',
+            boxShadow: 10,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            fontWeight: 'bold',
+            fontSize: '1.25rem',
+          }}
+        >
+          <LogoutIcon color="warning" />
+          Confirmar saída
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '1rem', color: '#555' }}>
+            Tem certeza de que deseja <strong>sair da sua conta</strong>?
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDialogOpen(false)}
+            variant="outlined"
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmLogout}
+            variant="contained"
+            color="warning"
+          >
+            Sair
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
