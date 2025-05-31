@@ -1,26 +1,34 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoadingPage from './pages/LoadingPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
+import { LayoutProvider } from './context/LayoutContext';
+import UsersListPage from './pages/UsersListPage';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LoadingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/home"
-            element={
-              <PrivateRoute>
-                <HomePage />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
+        <LayoutProvider>
+          <Routes>
+            <Route path="/" element={<LoadingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Área protegida */}
+            <Route
+              path="/home"
+              element={<PrivateRoute element={<HomePage />} />}
+            >
+              <Route index element={<UsersListPage />} />
+              <Route path="usuarios" element={<UsersListPage />} />
+            </Route>
+
+            {/* fallback */}
+            <Route path="*" element={<Navigate to="/home" />} />
+          </Routes>
+        </LayoutProvider>
       </AuthProvider>
     </Router>
   );

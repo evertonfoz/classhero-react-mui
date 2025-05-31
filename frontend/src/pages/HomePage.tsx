@@ -16,36 +16,34 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useNavigate } from 'react-router-dom';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const drawerWidth = 240;
-const collapsedWidth = 64;
+import { useLayout } from '../context/LayoutContext';
 
 export default function HomePage() {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopOpen, setDesktopOpen] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
+  const { isSidebarOpen, toggleSidebar, sidebarWidth } = useLayout();
 
   const handleDrawerToggle = () => {
     if (isDesktop) {
-      setDesktopOpen(!desktopOpen);
+      toggleSidebar();
     } else {
       setMobileOpen(!mobileOpen);
     }
   };
 
-  const handleLogout = () => {
-    setDialogOpen(true);
-  };
-
+  const handleLogout = () => setDialogOpen(true);
   const confirmLogout = () => {
     setDialogOpen(false);
     logout();
@@ -63,21 +61,44 @@ export default function HomePage() {
         px: 1,
       }}
     >
-      <Box display="flex" alignItems="center" gap={1} px={1}>
-        <IconButton onClick={handleDrawerToggle}>
-          <MenuIcon />
-        </IconButton>
-        {desktopOpen && (
-          <Typography variant="h6" fontWeight="bold" noWrap>
-            ClassHero
-          </Typography>
-        )}
+      <Box>
+        <Box display="flex" alignItems="center" gap={1} px={1}>
+          <IconButton onClick={handleDrawerToggle}>
+            <MenuIcon />
+          </IconButton>
+          {isSidebarOpen && (
+            <Typography variant="h6" fontWeight="bold" noWrap>
+              ClassHero
+            </Typography>
+          )}
+        </Box>
+
+        <Divider sx={{ my: 2, borderColor: '#ccc' }} />
+
+        <Box
+          onClick={() => navigate('/home/usuarios')}
+          sx={{
+            mt: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            px: 1,
+          }}
+        >
+          <Tooltip title="Usuários">
+            <IconButton>
+              <PeopleAltIcon />
+            </IconButton>
+          </Tooltip>
+          {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
+        </Box>
       </Box>
 
       <Box
         display="flex"
         alignItems="center"
-        justifyContent={desktopOpen ? 'flex-start' : 'center'}
+        justifyContent={isSidebarOpen ? 'flex-start' : 'center'}
         px={1}
         mt="auto"
       >
@@ -96,15 +117,13 @@ export default function HomePage() {
               <LogoutIcon />
             </IconButton>
           </Tooltip>
-          {desktopOpen && (
-            <Typography variant="body2">
-              Sair
-            </Typography>
-          )}
+          {isSidebarOpen && <Typography variant="body2">Sair</Typography>}
         </Box>
       </Box>
     </Box>
   );
+
+  const isHomeRoot = location.pathname === '/home';
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -125,13 +144,13 @@ export default function HomePage() {
 
       <Drawer
         variant={isDesktop ? 'permanent' : 'temporary'}
-        open={isDesktop ? desktopOpen : mobileOpen}
+        open={isDesktop ? isSidebarOpen : mobileOpen}
         onClose={handleDrawerToggle}
         ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', md: 'block' },
           '& .MuiDrawer-paper': {
-            width: isDesktop ? (desktopOpen ? drawerWidth : collapsedWidth) : drawerWidth,
+            width: isDesktop ? sidebarWidth : 240,
             boxSizing: 'border-box',
             transition: 'width 0.3s',
           },
@@ -146,24 +165,37 @@ export default function HomePage() {
           flexGrow: 1,
           p: 3,
           mt: !isDesktop ? 8 : 0,
+          minHeight: '100vh',
+          transition: 'margin 0.3s, width 0.3s',
+          ml: {
+            xs: 0,
+            md: `${sidebarWidth}px`,
+          },
+          width: {
+            xs: '100%',
+            md: `calc(100% - ${sidebarWidth}px)`,
+          },
+          boxSizing: 'border-box',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '100vh',
         }}
       >
-        <Box
-          component="img"
-          src="/logos/logo_001.png"
-          alt="Logo"
-          sx={{
-            width: { xs: '220px', md: '340px' },
-            height: 'auto',
-          }}
-        />
+        {isHomeRoot ? (
+          <Box
+            component="img"
+            src="/logos/logo_001.png"
+            alt="Logo"
+            sx={{
+              width: { xs: '220px', md: '340px' },
+              height: 'auto',
+            }}
+          />
+        ) : (
+          <Outlet />
+        )}
       </Box>
 
-      {/* Dialog estilizado */}
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
@@ -196,18 +228,10 @@ export default function HomePage() {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDialogOpen(false)}
-            variant="outlined"
-            color="inherit"
-          >
+          <Button onClick={() => setDialogOpen(false)} variant="outlined" color="inherit">
             Cancelar
           </Button>
-          <Button
-            onClick={confirmLogout}
-            variant="contained"
-            color="warning"
-          >
+          <Button onClick={confirmLogout} variant="contained" color="warning">
             Sair
           </Button>
         </DialogActions>

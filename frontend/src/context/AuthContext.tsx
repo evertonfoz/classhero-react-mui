@@ -1,9 +1,9 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  token: string | null;
   login: (token: string) => void;
   logout: () => void;
 }
@@ -12,33 +12,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    setIsAuthenticated(!!token);
+    const storedToken = localStorage.getItem('access_token');
+    if (storedToken) {
+      setToken(storedToken);
+      setIsAuthenticated(true);
+    }
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem('access_token', token);
+  const login = (newToken: string) => {
+    localStorage.setItem('access_token', newToken);
+    setToken(newToken);
     setIsAuthenticated(true);
     navigate('/home');
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
+    setToken(null);
     setIsAuthenticated(false);
     navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook para facilitar o uso
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth precisa estar dentro do AuthProvider');
