@@ -18,6 +18,7 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLayout } from '../context/LayoutContext';
+import { useNavigate } from 'react-router-dom'; // Importação adicionada
 
 interface User {
   email: string | null;
@@ -45,7 +46,7 @@ function useDynamicLimit(rowHeight = 56) {
       const offset = isMobile ? 220 : 280;
       const availableHeight = window.innerHeight - offset;
       const rows = Math.floor(availableHeight / rowHeight);
-      const capped = isMobile ? Math.min(rows, 6) : rows; // evita valores altos no mobile
+      const capped = isMobile ? Math.min(rows, 6) : rows;
       setLimit(capped > 0 ? capped : 4);
     };
 
@@ -57,12 +58,13 @@ function useDynamicLimit(rowHeight = 56) {
   return limit;
 }
 
-
 export default function UsersListPage() {
   const { logout } = useAuth();
   const { isSidebarOpen, sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const navigate = useNavigate(); // Hook adicionado
 
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,7 +161,13 @@ export default function UsersListPage() {
               </TableHead>
               <TableBody>
                 {users.map((user, i) => (
-                  <TableRow key={i}>
+                  <TableRow
+                    key={i}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/home/perfil/${encodeURIComponent(user.email ?? '')}`)}
+
+                  >
                     <TableCell>
                       <Typography fontWeight="medium">{user.name ?? '(sem nome)'}</Typography>
                       {isMobile && (

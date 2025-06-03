@@ -63,7 +63,6 @@ export default function LoginPage() {
                 showMessage(`Erro: ${data.message}`, 'error');
             }
         } catch (error) {
-            console.error('Erro ao enviar o código:', error);
             showMessage('Não foi possível enviar o código. Tente novamente.', 'error');
         } finally {
             setLoadingRequest(false);
@@ -95,12 +94,11 @@ export default function LoginPage() {
             const data = await response.json();
 
             if (response.ok) {
-                login(data.access_token);
+                login(data.access_token, email);
             } else {
                 setErrorMessage(data.message || 'Código inválido. Tente novamente.');
             }
         } catch (error) {
-            console.error('Erro ao verificar o código:', error);
             setErrorMessage('Erro de conexão. Tente novamente.');
         } finally {
             setLoadingValidate(false);

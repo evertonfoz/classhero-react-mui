@@ -6,7 +6,7 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import { LayoutProvider } from './context/LayoutContext';
 import UsersListPage from './pages/UsersListPage';
-import ProfilePage from './pages/ProfilePage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 function App() {
   return (
@@ -24,8 +24,7 @@ function App() {
             >
               <Route index element={<UsersListPage />} />
               <Route path="usuarios" element={<UsersListPage />} />
-              <Route path="perfil" element={<ProfilePage />} />
-
+              <Route path="perfil/:email?" element={<ProfilePage />} /> {/* 🔧 Rota com parâmetro */}
             </Route>
 
             {/* fallback */}

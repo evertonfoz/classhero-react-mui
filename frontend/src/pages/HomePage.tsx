@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Drawer,
@@ -17,12 +17,12 @@ import {
   DialogActions,
   Button,
   Divider,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLayout } from '../context/LayoutContext';
@@ -34,8 +34,12 @@ export default function HomePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { isSidebarOpen, toggleSidebar, sidebarWidth } = useLayout();
+
+  const userName = user?.name?.split?.(' ')?.[0] ?? '';
+  const userEmail = user?.email ?? '';
+  const userAvatar = user?.avatar ?? '';
 
   const handleDrawerToggle = () => {
     if (isDesktop) {
@@ -64,7 +68,6 @@ export default function HomePage() {
       }}
     >
       <Box>
-        {/* Topo: Menu + Título sem margens */}
         <Box
           sx={{
             backgroundColor: '#e6e6e6',
@@ -76,9 +79,6 @@ export default function HomePage() {
             pl: 0.5,
             pr: 0,
             py: 1,
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-            m: 0,
           }}
         >
           <IconButton onClick={handleDrawerToggle} size="small">
@@ -91,7 +91,6 @@ export default function HomePage() {
           )}
         </Box>
 
-        {/* Bloco Perfil sem espaço abaixo */}
         <Box
           onClick={() => navigate('/home/perfil')}
           sx={{
@@ -103,19 +102,24 @@ export default function HomePage() {
             py: 1,
             borderRadius: 2,
             transition: 'background-color 0.2s',
-            '&:hover': {
-              backgroundColor: '#e6e6e6',
-            },
+            '&:hover': { backgroundColor: '#e6e6e6' },
           }}
         >
-          <AccountCircleIcon fontSize="medium" sx={{ color: '#555' }} />
+          <Avatar
+            src={userAvatar || undefined}
+            alt={userName || 'Avatar'}
+            sx={{ width: 36, height: 36 }}
+          >
+            {!userAvatar && (userName?.charAt?.(0)?.toUpperCase() ?? 'U')}
+          </Avatar>
+
           {isSidebarOpen && (
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                Meu Perfil
+                {userName || 'Meu Perfil'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                user@exemplo.com
+                {userEmail || 'user@exemplo.com'}
               </Typography>
             </Box>
           )}
@@ -123,54 +127,51 @@ export default function HomePage() {
 
         <Divider sx={{ my: 0, borderColor: '#ccc' }} />
 
-        {/* Itens de navegação SEM espaço entre eles */}
-        <Box  display="flex" flexDirection="column" gap={0}>
+        <Box display="flex" flexDirection="column" gap={0}>
           <Box
-    onClick={() => navigate('/home')}
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-      cursor: 'pointer',
-      px: 1,
-      py: 0,
-      borderRadius: 2,
-      '&:hover': { backgroundColor: '#e0e0e0' },
-    }}
-  >
-    <Tooltip title="Início">
-      <IconButton>
-        <HomeIcon />
-      </IconButton>
-    </Tooltip>
-    {isSidebarOpen && <Typography variant="body2">Início</Typography>}
-  </Box>
+            onClick={() => navigate('/home')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 1,
+              py: 0,
+              borderRadius: 2,
+              '&:hover': { backgroundColor: '#e0e0e0' },
+            }}
+          >
+            <Tooltip title="Início">
+              <IconButton>
+                <HomeIcon />
+              </IconButton>
+            </Tooltip>
+            {isSidebarOpen && <Typography variant="body2">Início</Typography>}
+          </Box>
 
-  {/* Item Usuários */}
-  <Box
-    onClick={() => navigate('/home/usuarios')}
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1,
-      cursor: 'pointer',
-      px: 1,
-      py: 0,
-      borderRadius: 2,
-      '&:hover': { backgroundColor: '#e0e0e0' },
-    }}
-  >
-    <Tooltip title="Usuários">
-      <IconButton>
-        <PeopleAltIcon />
-      </IconButton>
-    </Tooltip>
-    {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
-  </Box>
+          <Box
+            onClick={() => navigate('/home/usuarios')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 1,
+              py: 0,
+              borderRadius: 2,
+              '&:hover': { backgroundColor: '#e0e0e0' },
+            }}
+          >
+            <Tooltip title="Usuários">
+              <IconButton>
+                <PeopleAltIcon />
+              </IconButton>
+            </Tooltip>
+            {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
+          </Box>
         </Box>
       </Box>
 
-      {/* Botão Sair */}
       <Box
         display="flex"
         alignItems="center"
@@ -252,7 +253,7 @@ export default function HomePage() {
           },
           width: {
             xs: '100%',
-            md: `calc(100% - ${sidebarWidth}px)`,
+            md: `calc(100% - ${sidebarWidth}px)`
           },
           boxSizing: 'border-box',
           display: 'flex',
