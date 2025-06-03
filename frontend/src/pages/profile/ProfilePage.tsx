@@ -1,29 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Box,
-  Typography,
-  Button,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   CircularProgress,
-  Snackbar,
-  Alert,
-  Divider,
-  Avatar,
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileImageSection from './components/ProfileImageSection';
-import AvatarGallery from './components/AvatarGallery';
 import ProfileInfoForm from './components/ProfileInfoForm';
 import ProfileActionButtons from './components/ProfileActionButtons';
-import ConfirmDeleteDialog from './components/ConfirmDeleteDialog';
+import ProfileDetailsSection from './components/ProfileDetailsSection';
+import ProfileDialogsSection from './components/ProfileDialogsSection';
 
 
 
@@ -53,7 +40,6 @@ export default function ProfilePage() {
 
 
 
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -115,41 +101,42 @@ export default function ProfilePage() {
 
 
   const updateUserInfo = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/users/update-info', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          name: formData.name,
-          is_a_teacher: formData.is_a_teacher,
-          is_a_admin: formData.is_a_admin,
-          is_a_student: formData.is_a_student,
-          is_validated: formData.is_validated,
-        }),
-      });
+  try {
+    await fetch('http://localhost:3000/users/update-info', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        name: formData.name,
+        is_a_teacher: formData.is_a_teacher,
+        is_a_admin: formData.is_a_admin,
+        is_a_student: formData.is_a_student,
+        is_validated: formData.is_validated,
+      }),
+    });
 
-      const result = await response.json();
-      setMessage('Dados atualizados com sucesso!');
-      setSnackbarOpen(true);
-      setOriginalData(formData);
-      setIsEditing(false);
+    setMessage('Dados atualizados com sucesso!');
+    setSnackbarOpen(true);
+    setOriginalData(formData);
+    setIsEditing(false);
 
-      if (formData.email === currentUser?.email) {
-        updateUser({
-          name: formData.name,
-          is_a_teacher: formData.is_a_teacher,
-          is_a_admin: formData.is_a_admin,
-          is_a_student: formData.is_a_student,
-          is_validated: formData.is_validated,
-        });
-      }
-    } catch (err) {
-      alert('Erro ao atualizar dados. Tente novamente.');
-    }
-  };
+   if (formData.email === currentUser?.email) {
+  updateUser({
+    name: formData.name,
+    avatar: formData.avatar,
+    is_a_teacher: formData.is_a_teacher,
+    is_a_admin: formData.is_a_admin,
+    is_a_student: formData.is_a_student,
+    is_validated: formData.is_validated,
+  });
+}
+  } catch (err) {
+    alert('Erro ao atualizar dados. Tente novamente.');
+  }
+};
+
 
 
   const handleSelectOldAvatar = (url: string) => {
@@ -297,29 +284,6 @@ export default function ProfilePage() {
     setShowCancelDialog(false);
   };
 
-  const handleDeleteUser = async () => {
-  setIsDeleting(true);
-  try {
-    const response = await fetch(`http://localhost:3000/users/${formData.email}`, {
-      method: 'DELETE',
-    });
-
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.message);
-
-    setMessage('Usuário excluído com sucesso!');
-    setSnackbarOpen(true);
-    setShowDeleteDialog(false);
-
-    setTimeout(() => {
-      navigate('/home/usuarios'); // Redireciona para a lista de usuários
-    }, 3000);
-  } catch (err) {
-    console.error('❌ Erro ao excluir usuário:', err);
-    alert('Erro ao excluir usuário. Tente novamente.');
-    setIsDeleting(false);
-  }
-};
 
 
 
@@ -386,149 +350,39 @@ export default function ProfilePage() {
           onSave={updateUserInfo}
           onCancel={() => setShowCancelDialog(true)}
           onDelete={() => setShowDeleteDialog(true)}
-          disabled={isDeleting} 
+          disabled={isDeleting}
         />
 
-        <Box mt={4}>
-          <Divider sx={{ mb: 2, borderColor: '#bbb', borderBottomWidth: 2 }} />
-          <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" sx={{ mb: 1 }}>
-            Fotos anteriores
-          </Typography>
-          <AvatarGallery
-            avatarUrls={avatarGallery}
-            activeUrl={formData.avatar}
-            onSelectAvatar={handleSelectOldAvatar}
-          />
+        <ProfileDetailsSection
+          avatarGallery={avatarGallery}
+          activeUrl={formData.avatar}
+          onSelectAvatar={handleSelectOldAvatar}
+        />
 
-        </Box>
       </Paper>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-          {message}
-        </Alert>
-      </Snackbar>
-
-
-      {/* Diálogo de escolha de origem da foto */}
-      <Dialog open={showChoiceDialog} onClose={() => setShowChoiceDialog(false)}>
-        <DialogTitle>Escolher origem da foto</DialogTitle>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" startIcon={<PhotoLibraryIcon />} component="label">
-            Do computador
-            <input type="file" hidden accept="image/*" onChange={(e) => {
-              handleFileInput(e);
-              setShowChoiceDialog(false);
-            }} />
-          </Button>
-          <Button variant="contained" startIcon={<CameraAltIcon />} onClick={() => {
-            handleOpenCamera();
-            setShowChoiceDialog(false);
-          }}>
-            Tirar foto
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-
-
-      <Dialog
-        open={showCaptureDialog}
-        onClose={() => {
-          setShowCaptureDialog(false);
-          stopCamera();
-        }}
-        TransitionProps={{
-          onEntered: () => {
-            iniciarCamera();
-          }
-        }}
-      >
-
-        <DialogTitle>Tirar Foto</DialogTitle>
-        <DialogContent>
-          <video
-            ref={videoRef}
-            key={showCaptureDialog ? 'open' : 'closed'} // força recriação
-            autoPlay
-            playsInline
-            muted
-            style={{
-              width: '100%',
-              height: 'auto',
-              borderRadius: 8,
-              minHeight: 300,
-              backgroundColor: '#000',
-              objectFit: 'cover',
-            }}
-          />
-          <canvas ref={canvasRef} hidden />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => { setShowCaptureDialog(false); stopCamera(); }}>
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={handleTakePhoto}>
-            Capturar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-
-
-      {/* Diálogo de cancelar edição */}
-      <Dialog open={showCancelDialog} onClose={() => setShowCancelDialog(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <LogoutIcon color="warning" />
-          <Typography variant="h6" component="span" fontWeight="bold">Cancelar edição</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography>Tem certeza de que deseja <strong>descartar as alterações</strong>?</Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" onClick={() => setShowCancelDialog(false)}>Voltar</Button>
-          <Button variant="contained" onClick={handleCancel} color="inherit">Sim, cancelar</Button>
-        </DialogActions>
-      </Dialog>
-
-      <ConfirmDeleteDialog
-        open={showDeleteDialog}
-        loading={isDeleting}
-        onCancel={() => setShowDeleteDialog(false)}
-        onConfirm={handleDeleteUser}
+      <ProfileDialogsSection
+        snackbarOpen={snackbarOpen}
+        message={message}
+        showChoiceDialog={showChoiceDialog}
+        showCaptureDialog={showCaptureDialog}
+        showCancelDialog={showCancelDialog}
+        showConfirmOldAvatarDialog={showConfirmOldAvatarDialog}
+        selectedOldAvatar={selectedOldAvatar}
+        handleCloseSnackbar={handleCloseSnackbar}
+        handleFileInput={handleFileInput}
+        handleOpenCamera={handleOpenCamera}
+        stopCamera={stopCamera}
+        iniciarCamera={iniciarCamera}
+        handleTakePhoto={handleTakePhoto}
+        handleCancel={handleCancel}
+        confirmUseOldAvatar={confirmUseOldAvatar}
+        setShowChoiceDialog={setShowChoiceDialog}
+        setShowCaptureDialog={setShowCaptureDialog}
+        setShowCancelDialog={setShowCancelDialog}
+        setShowConfirmOldAvatarDialog={setShowConfirmOldAvatarDialog}
       />
 
-      <Dialog open={showConfirmOldAvatarDialog} onClose={() => setShowConfirmOldAvatarDialog(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CameraAltIcon color="primary" />
-          <Typography variant="h6" component="span" fontWeight="bold">
-            Usar esta imagem?
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            Deseja definir esta imagem como sua nova foto de perfil?
-          </Typography>
-          <Box mt={2} display="flex" justifyContent="center">
-            <Avatar src={selectedOldAvatar ?? ''} sx={{ width: 96, height: 96 }} />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" onClick={() => setShowConfirmOldAvatarDialog(false)}>
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={confirmUseOldAvatar} color="primary">
-            Confirmar
-          </Button>
-        </DialogActions>
-      </Dialog>
 
 
     </Box>

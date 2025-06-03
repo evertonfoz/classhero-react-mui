@@ -26,6 +26,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLayout } from '../context/LayoutContext';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 
 export default function HomePage() {
   const theme = useTheme();
@@ -36,6 +37,9 @@ export default function HomePage() {
   const location = useLocation();
   const { logout, user } = useAuth();
   const { isSidebarOpen, toggleSidebar, sidebarWidth } = useLayout();
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+
+  const handleClose = () => setAccountDialogOpen(false);
 
   const userName = user?.name?.split?.(' ')?.[0] ?? '';
   const userEmail = user?.email ?? '';
@@ -63,8 +67,6 @@ export default function HomePage() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        py: 0,
-        px: 0,
       }}
     >
       <Box>
@@ -74,10 +76,8 @@ export default function HomePage() {
             borderBottom: '1px solid #ccc',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-start',
             gap: 1,
             pl: 0.5,
-            pr: 0,
             py: 1,
           }}
         >
@@ -101,7 +101,6 @@ export default function HomePage() {
             px: 1,
             py: 1,
             borderRadius: 2,
-            transition: 'background-color 0.2s',
             '&:hover': { backgroundColor: '#e6e6e6' },
           }}
         >
@@ -149,26 +148,28 @@ export default function HomePage() {
             {isSidebarOpen && <Typography variant="body2">Início</Typography>}
           </Box>
 
-          <Box
-            onClick={() => navigate('/home/usuarios')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              px: 1,
-              py: 0,
-              borderRadius: 2,
-              '&:hover': { backgroundColor: '#e0e0e0' },
-            }}
-          >
-            <Tooltip title="Usuários">
-              <IconButton>
-                <PeopleAltIcon />
-              </IconButton>
-            </Tooltip>
-            {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
-          </Box>
+          {user?.is_a_admin && (
+            <Box
+              onClick={() => navigate('/home/usuarios')}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                cursor: 'pointer',
+                px: 1,
+                py: 0,
+                borderRadius: 2,
+                '&:hover': { backgroundColor: '#e0e0e0' },
+              }}
+            >
+              <Tooltip title="Usuários">
+                <IconButton>
+                  <PeopleAltIcon />
+                </IconButton>
+              </Tooltip>
+              {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
+            </Box>
+          )}
         </Box>
       </Box>
 
@@ -204,6 +205,24 @@ export default function HomePage() {
   );
 
   const isHomeRoot = location.pathname === '/home';
+
+  useEffect(() => {
+    if (!user) return;
+
+    const avatarOk = !!user.avatar?.trim();
+    const nameOk = !!user.name?.trim();
+    const precisaValidar = !user.is_validated;
+
+    console.log('avatarOk:', avatarOk);
+    console.log('nameOk:', nameOk);
+    console.log('is_validated:', user.is_validated);
+    console.log('perfilPreenchido:', avatarOk && nameOk);
+    console.log('precisaValidar:', precisaValidar);
+
+    if (precisaValidar) {
+      setAccountDialogOpen(true);
+    }
+  }, [user]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -246,15 +265,8 @@ export default function HomePage() {
           p: 3,
           mt: !isDesktop ? 8 : 0,
           minHeight: '100vh',
-          transition: 'margin 0.3s, width 0.3s',
-          ml: {
-            xs: 0,
-            md: `${sidebarWidth}px`,
-          },
-          width: {
-            xs: '100%',
-            md: `calc(100% - ${sidebarWidth}px)`
-          },
+          ml: { xs: 0, md: `${sidebarWidth}px` },
+          width: { xs: '100%', md: `calc(100% - ${sidebarWidth}px)` },
           boxSizing: 'border-box',
           display: 'flex',
           justifyContent: 'center',
@@ -313,6 +325,50 @@ export default function HomePage() {
           </Button>
           <Button onClick={confirmLogout} variant="contained" color="warning">
             Sair
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={accountDialogOpen}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+            backgroundColor: '#fefefe',
+            boxShadow: 10,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            fontWeight: 'bold',
+            fontSize: '1.25rem',
+          }}
+        >
+          <WarningAmberRoundedIcon color="warning" />
+          Conta não validada
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '1rem', color: '#444' }}>
+            Sua conta ainda <strong>não foi validada</strong> por um administrador.
+            <br /><br />
+            {!user?.name?.trim() || !user?.avatar?.trim() ? (
+              <>Preencha seu perfil caso não tenha feito isso e aguarde a aprovação.</>
+            ) : (
+              <>Aguardando validação para acessar todos os recursos.</>
+            )}
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="contained" onClick={handleClose} autoFocus>
+            Entendi
           </Button>
         </DialogActions>
       </Dialog>
