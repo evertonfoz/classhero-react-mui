@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoadingPage from './pages/LoadingPage';
 import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
+import HomePage from './pages/home/HomePage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import { LayoutProvider } from './context/LayoutContext';

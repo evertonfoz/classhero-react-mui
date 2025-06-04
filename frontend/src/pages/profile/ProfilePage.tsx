@@ -101,41 +101,41 @@ export default function ProfilePage() {
 
 
   const updateUserInfo = async () => {
-  try {
-    await fetch('http://localhost:3000/users/update-info', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        name: formData.name,
-        is_a_teacher: formData.is_a_teacher,
-        is_a_admin: formData.is_a_admin,
-        is_a_student: formData.is_a_student,
-        is_validated: formData.is_validated,
-      }),
-    });
+    try {
+      await fetch('http://localhost:3000/users/update-info', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name,
+          is_a_teacher: formData.is_a_teacher,
+          is_a_admin: formData.is_a_admin,
+          is_a_student: formData.is_a_student,
+          is_validated: formData.is_validated,
+        }),
+      });
 
-    setMessage('Dados atualizados com sucesso!');
-    setSnackbarOpen(true);
-    setOriginalData(formData);
-    setIsEditing(false);
+      setMessage('Dados atualizados com sucesso!');
+      setSnackbarOpen(true);
+      setOriginalData(formData);
+      setIsEditing(false);
 
-   if (formData.email === currentUser?.email) {
-  updateUser({
-    name: formData.name,
-    avatar: formData.avatar,
-    is_a_teacher: formData.is_a_teacher,
-    is_a_admin: formData.is_a_admin,
-    is_a_student: formData.is_a_student,
-    is_validated: formData.is_validated,
-  });
-}
-  } catch (err) {
-    alert('Erro ao atualizar dados. Tente novamente.');
-  }
-};
+      if (formData.email === currentUser?.email) {
+        updateUser({
+          name: formData.name,
+          avatar: formData.avatar,
+          is_a_teacher: formData.is_a_teacher,
+          is_a_admin: formData.is_a_admin,
+          is_a_student: formData.is_a_student,
+          is_validated: formData.is_validated,
+        });
+      }
+    } catch (err) {
+      alert('Erro ao atualizar dados. Tente novamente.');
+    }
+  };
 
 
 

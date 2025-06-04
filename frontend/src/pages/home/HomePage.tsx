@@ -24,9 +24,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useLayout } from '../context/LayoutContext';
+import { useAuth } from '../../context/AuthContext';
+import { useLayout } from '../../context/LayoutContext';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import SidebarContent from './components/SidebarContent'; // ajuste o path conforme necessário
+
 
 export default function HomePage() {
   const theme = useTheme();
@@ -58,151 +60,6 @@ export default function HomePage() {
     setDialogOpen(false);
     logout();
   };
-
-  const drawerContent = (
-    <Box
-      sx={{
-        height: '100%',
-        backgroundColor: '#f0f0f0',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
-    >
-      <Box>
-        <Box
-          sx={{
-            backgroundColor: '#e6e6e6',
-            borderBottom: '1px solid #ccc',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            pl: 0.5,
-            py: 1,
-          }}
-        >
-          <IconButton onClick={handleDrawerToggle} size="small">
-            <MenuIcon fontSize="small" />
-          </IconButton>
-          {isSidebarOpen && (
-            <Typography variant="h6" fontWeight="bold" noWrap>
-              ClassHero
-            </Typography>
-          )}
-        </Box>
-
-        <Box
-          onClick={() => navigate('/home/perfil')}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            cursor: 'pointer',
-            px: 1,
-            py: 1,
-            borderRadius: 2,
-            '&:hover': { backgroundColor: '#e6e6e6' },
-          }}
-        >
-          <Avatar
-            src={userAvatar || undefined}
-            alt={userName || 'Avatar'}
-            sx={{ width: 36, height: 36 }}
-          >
-            {!userAvatar && (userName?.charAt?.(0)?.toUpperCase() ?? 'U')}
-          </Avatar>
-
-          {isSidebarOpen && (
-            <Box>
-              <Typography variant="body2" fontWeight="bold">
-                {userName || 'Meu Perfil'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {userEmail || 'user@exemplo.com'}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-
-        <Divider sx={{ my: 0, borderColor: '#ccc' }} />
-
-        <Box display="flex" flexDirection="column" gap={0}>
-          <Box
-            onClick={() => navigate('/home')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              px: 1,
-              py: 0,
-              borderRadius: 2,
-              '&:hover': { backgroundColor: '#e0e0e0' },
-            }}
-          >
-            <Tooltip title="Início">
-              <IconButton>
-                <HomeIcon />
-              </IconButton>
-            </Tooltip>
-            {isSidebarOpen && <Typography variant="body2">Início</Typography>}
-          </Box>
-
-          {user?.is_a_admin && (
-            <Box
-              onClick={() => navigate('/home/usuarios')}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                cursor: 'pointer',
-                px: 1,
-                py: 0,
-                borderRadius: 2,
-                '&:hover': { backgroundColor: '#e0e0e0' },
-              }}
-            >
-              <Tooltip title="Usuários">
-                <IconButton>
-                  <PeopleAltIcon />
-                </IconButton>
-              </Tooltip>
-              {isSidebarOpen && <Typography variant="body2">Usuários</Typography>}
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent={isSidebarOpen ? 'flex-start' : 'center'}
-        px={1}
-        mt="auto"
-      >
-        <Box
-          onClick={handleLogout}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            px: 1,
-            py: 1,
-            borderRadius: 2,
-            '&:hover': { backgroundColor: '#e0e0e0' },
-          }}
-        >
-          <Tooltip title="Sair">
-            <IconButton>
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
-          {isSidebarOpen && <Typography variant="body2">Sair</Typography>}
-        </Box>
-      </Box>
-    </Box>
-  );
 
   const isHomeRoot = location.pathname === '/home';
 
@@ -255,7 +112,13 @@ export default function HomePage() {
           },
         }}
       >
-        {drawerContent}
+       <SidebarContent
+  isSidebarOpen={isSidebarOpen}
+  toggleSidebar={handleDrawerToggle}
+  user={user}
+  onLogout={handleLogout}
+/>
+
       </Drawer>
 
       <Box
