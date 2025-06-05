@@ -66,15 +66,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!user) return;
 
-    const avatarOk = !!user.avatar?.trim();
-    const nameOk = !!user.name?.trim();
     const precisaValidar = !user.is_validated;
-
-    console.log('avatarOk:', avatarOk);
-    console.log('nameOk:', nameOk);
-    console.log('is_validated:', user.is_validated);
-    console.log('perfilPreenchido:', avatarOk && nameOk);
-    console.log('precisaValidar:', precisaValidar);
 
     if (precisaValidar) {
       setAccountDialogOpen(true);

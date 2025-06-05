@@ -12,11 +12,19 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme/theme';
 
+import  CustomSnackbarProvider  from './components/CustomSnackbarProvider';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <CustomSnackbarProvider
+        maxSnack={3}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        autoHideDuration={4000}
+      >
+        <App />
+      </CustomSnackbarProvider>
     </ThemeProvider>
   </StrictMode>
 );

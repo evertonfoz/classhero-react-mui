@@ -5,8 +5,10 @@ import HomePage from './pages/home/HomePage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import { LayoutProvider } from './context/LayoutContext';
-import UsersListPage from './pages/UsersListPage';
+import UsersListPage from './pages/users/UsersListPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import CoursesListPage from './pages/courses/CoursesListPage';
+import CourseFormPage from './pages/courses/CourseFormPage';
 
 function App() {
   return (
@@ -24,7 +26,10 @@ function App() {
             >
               <Route index element={<UsersListPage />} />
               <Route path="usuarios" element={<UsersListPage />} />
-              <Route path="perfil/:email?" element={<ProfilePage />} /> {/* 🔧 Rota com parâmetro */}
+              <Route path="perfil/:email?" element={<ProfilePage />} />
+              <Route path="cursos" element={<CoursesListPage />} />
+              <Route path="cursos/novo" element={<CourseFormPage />} />
+              <Route path="cursos/editar/:id" element={<CourseFormPage />} />
             </Route>
 
             {/* fallback */}

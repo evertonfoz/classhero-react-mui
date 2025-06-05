@@ -1,0 +1,244 @@
+import {
+    Box,
+    Button,
+    Switch,
+    TextField,
+    Typography,
+    FormControlLabel,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+} from '@mui/material';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useParams } from 'react-router-dom';
+
+
+export default function CourseFormPage() {
+    const [nome, setNome] = useState('');
+    const [sigla, setSigla] = useState('');
+    const [ativo, setAtivo] = useState(true);
+    const [formModified, setFormModified] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar(); // 🔔
+
+    const { id } = useParams();
+    const isEditMode = Boolean(id);
+    const [originalNome, setOriginalNome] = useState('');
+    const [originalSigla, setOriginalSigla] = useState('');
+    const [originalAtivo, setOriginalAtivo] = useState(true);
+
+
+
+    useEffect(() => {
+        const foiModificado =
+            nome.trim() !== originalNome.trim() ||
+            sigla.trim().toUpperCase() !== originalSigla.trim().toUpperCase() ||
+            ativo !== originalAtivo;
+
+        setFormModified(foiModificado);
+    }, [nome, sigla, ativo, originalNome, originalSigla, originalAtivo]);
+
+
+    const handleReset = () => {
+  if (isEditMode) {
+    setNome(originalNome);
+    setSigla(originalSigla);
+    setAtivo(originalAtivo);
+  } else {
+    setNome('');
+    setSigla('');
+    setAtivo(true);
+  }
+  setFormModified(false);
+};
+
+
+    useEffect(() => {
+        if (isEditMode) {
+            const fetchCourse = async () => {
+                const token = localStorage.getItem('access_token');
+                try {
+                    const response = await fetch(`http://localhost:3000/courses/${id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+
+                    if (!response.ok) throw new Error('Erro ao buscar curso');
+
+                    const data = await response.json();
+                    setNome(data.data.name || '');
+                    setSigla(data.data.acronym || '');
+                    setAtivo(data.data.status === 'active');
+
+                    setOriginalNome(data.data.name || '');
+                    setOriginalSigla(data.data.acronym || '');
+                    setOriginalAtivo(data.data.status === 'active')
+                } catch (error) {
+                    enqueueSnackbar('Erro ao carregar curso para edição.', { variant: 'error' });
+                    navigate('/home/cursos'); // Redireciona se houver erro
+                }
+            };
+
+            fetchCourse();
+        }
+    }, [id]);
+
+
+    const handleSubmit = async () => {
+        const token = localStorage.getItem('access_token');
+        try {
+            const response = await fetch(`http://localhost:3000/courses${isEditMode ? `/${id}` : ''}`, {
+                method: isEditMode ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    name: nome.trim(),
+                    acronym: sigla.trim().toUpperCase(),
+                    status: ativo ? 'active' : 'inactive',
+                }),
+            });
+
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                let message = result?.message || 'Erro ao criar curso';
+                enqueueSnackbar(message, { variant: 'error' });
+                return;
+            }
+
+            if (isEditMode) {
+                enqueueSnackbar('Curso atualizado com sucesso!', { variant: 'success' });
+                navigate('/home/cursos');
+            }
+            else {
+                setDialogOpen(true);
+            }
+        } catch (error: any) {
+            enqueueSnackbar(`Erro ao cadastrar curso: ${error.message}`, { variant: 'error' });
+        }
+    };
+
+    return (
+        <Box
+            sx={{
+                px: 4,
+                py: 4,
+                width: '100%',
+                boxSizing: 'border-box',
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+            }}
+        >
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Novo Curso
+            </Typography>
+
+            <TextField
+                fullWidth
+                label="Nome do Curso *"
+                variant="outlined"
+                value={nome}
+                onChange={(e) => {
+                    const valor = e.target.value;
+                    const formatado = valor.charAt(0).toUpperCase() + valor.slice(1);
+                    setNome(formatado);
+                }}
+                sx={{ mb: 2 }}
+            />
+
+            <Box display="flex" alignItems="center" width="100%" gap={2} sx={{ mb: 3 }}>
+                <TextField
+                    label="Sigla *"
+                    variant="outlined"
+                    value={sigla}
+                    onChange={(e) => setSigla(e.target.value.toUpperCase())}
+                    inputProps={{ maxLength: 5 }}
+                    sx={{ width: 160 }}
+                />
+                <Box flexGrow={1} />
+                <FormControlLabel
+                    control={<Switch checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />}
+                    label="Curso Ativo"
+                />
+            </Box>
+
+            <Box display="flex" gap={2}>
+                <Button
+                    variant="outlined"
+                    disabled={!formModified}
+                    onClick={handleReset}
+                >
+                    Cancelar
+                </Button>
+
+                <Button
+                    variant="contained"
+                    disabled={!formModified || !nome.trim() || !sigla.trim()}
+                    onClick={handleSubmit}
+                >
+                    {isEditMode ? 'Salvar Alterações' : 'Cadastrar'}
+                </Button>
+
+
+
+            </Box>
+
+            <Dialog
+                open={dialogOpen}
+                hideBackdrop={false}
+                onClose={(_, reason) => {
+                    if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
+                        setDialogOpen(false);
+                    }
+                }}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        p: 2,
+                        maxWidth: 420,
+                    },
+                }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircleOutlineIcon color="success" />
+                    <Typography variant="h6" component="span" fontWeight="bold">
+                        {isEditMode ? 'Curso atualizado com sucesso!' : 'Curso cadastrado com sucesso!'}
+                    </Typography>
+                </DialogTitle>
+
+                <DialogContent>
+                    <Typography>Deseja cadastrar outro curso?</Typography>
+                </DialogContent>
+
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button variant="outlined" onClick={() => navigate('/home/cursos')}>
+                        Finalizar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            handleReset();
+                            setDialogOpen(false);
+                        }}
+                        autoFocus
+                        sx={{ whiteSpace: 'nowrap', minWidth: 160 }}
+                    >
+                        Cadastrar outro
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+
+        </Box>
+    );
+}
