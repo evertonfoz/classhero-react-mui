@@ -13,10 +13,17 @@ import { useSnackbar } from 'notistack';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DisciplineFormFields from './components/formpage/DisciplineFormFields';
 
+interface Course {
+  course_id: string;
+  name: string;
+}
+
 export default function DisciplinesFormPage() {
   const [nome, setNome] = useState('');
   const [ementa, setEmenta] = useState('');
   const [cargaHoraria, setCargaHoraria] = useState<number | ''>('');
+  const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
+  const [originalSelectedCourses, setOriginalSelectedCourses] = useState<Course[]>([]);
   const [formModified, setFormModified] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -33,20 +40,23 @@ export default function DisciplinesFormPage() {
     const modificado =
       nome.trim() !== originalNome.trim() ||
       ementa.trim() !== originalEmenta.trim() ||
-      cargaHoraria !== originalCargaHoraria;
+      cargaHoraria !== originalCargaHoraria ||
+      JSON.stringify(selectedCourses.map(c => c.course_id).sort()) !== JSON.stringify(originalSelectedCourses.map(c => c.course_id).sort());
 
     setFormModified(modificado);
-  }, [nome, ementa, cargaHoraria, originalNome, originalEmenta, originalCargaHoraria]);
+  }, [nome, ementa, cargaHoraria, selectedCourses, originalNome, originalEmenta, originalCargaHoraria, originalSelectedCourses]);
 
   const handleReset = () => {
     if (isEditMode) {
       setNome(originalNome);
       setEmenta(originalEmenta);
       setCargaHoraria(originalCargaHoraria);
+      setSelectedCourses(originalSelectedCourses);
     } else {
       setNome('');
       setEmenta('');
       setCargaHoraria('');
+      setSelectedCourses([]);
     }
     setFormModified(false);
   };
@@ -65,6 +75,8 @@ export default function DisciplinesFormPage() {
           setNome(data.name || '');
           setEmenta(data.syllabus || '');
           setCargaHoraria(data.workload_hours || '');
+          setSelectedCourses(data.courses || []);
+          setOriginalSelectedCourses(data.courses || []);
 
           setOriginalNome(data.name || '');
           setOriginalEmenta(data.syllabus || '');
@@ -92,6 +104,7 @@ export default function DisciplinesFormPage() {
           name: nome.trim(),
           syllabus: ementa.trim(),
           workload_hours: Number(cargaHoraria),
+          course_ids: selectedCourses.map((c) => c.course_id),
         }),
       });
 
@@ -133,9 +146,11 @@ export default function DisciplinesFormPage() {
         nome={nome}
         ementa={ementa}
         cargaHoraria={cargaHoraria}
+        selectedCourses={selectedCourses}
         setNome={setNome}
         setEmenta={setEmenta}
         setCargaHoraria={setCargaHoraria}
+        setSelectedCourses={setSelectedCourses}
       />
 
       <Box display="flex" gap={2}>
