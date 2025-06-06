@@ -5,7 +5,6 @@ import {
   IconButton,
   Typography,
   CssBaseline,
-  Tooltip,
   useMediaQuery,
   useTheme,
   AppBar,
@@ -16,18 +15,16 @@ import {
   DialogContentText,
   DialogActions,
   Button,
-  Divider,
-  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import HomeIcon from '@mui/icons-material/Home';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLayout } from '../../context/LayoutContext';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import SidebarContent from './components/SidebarContent'; // ajuste o path conforme necessário
+import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
+
 
 
 export default function HomePage() {
@@ -35,17 +32,12 @@ export default function HomePage() {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const { isSidebarOpen, toggleSidebar, sidebarWidth } = useLayout();
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
   const handleClose = () => setAccountDialogOpen(false);
-
-  const userName = user?.name?.split?.(' ')?.[0] ?? '';
-  const userEmail = user?.email ?? '';
-  const userAvatar = user?.avatar ?? '';
 
   const handleDrawerToggle = () => {
     if (isDesktop) {
@@ -104,12 +96,12 @@ export default function HomePage() {
           },
         }}
       >
-       <SidebarContent
-  isSidebarOpen={isSidebarOpen}
-  toggleSidebar={handleDrawerToggle}
-  user={user}
-  onLogout={handleLogout}
-/>
+        <SidebarContent
+          isSidebarOpen={isSidebarOpen}
+          toggleSidebar={handleDrawerToggle}
+          user={user}
+          onLogout={handleLogout}
+        />
 
       </Drawer>
 
@@ -124,10 +116,13 @@ export default function HomePage() {
           width: { xs: '100%', md: `calc(100% - ${sidebarWidth}px)` },
           boxSizing: 'border-box',
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          flexDirection: 'column',
+          alignItems: isHomeRoot ? 'center' : 'flex-start',
+          justifyContent: isHomeRoot ? 'center' : 'flex-start',
         }}
       >
+
+
         {isHomeRoot ? (
           <Box
             component="img"
@@ -143,46 +138,17 @@ export default function HomePage() {
         )}
       </Box>
 
-      <Dialog
+      <ConfirmationDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            p: 2,
-            backgroundColor: '#fefefe',
-            boxShadow: 10,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            fontWeight: 'bold',
-            fontSize: '1.25rem',
-          }}
-        >
-          <LogoutIcon color="warning" />
-          Confirmar saída
-        </DialogTitle>
+        onConfirm={confirmLogout}
+        title={<><LogoutIcon color="warning" /> Confirmar saída</>}
+        message="Tem certeza de que deseja sair da sua conta?"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        confirmColor="warning"
+      />
 
-        <DialogContent>
-          <DialogContentText sx={{ fontSize: '1rem', color: '#555' }}>
-            Tem certeza de que deseja <strong>sair da sua conta</strong>?
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDialogOpen(false)} variant="outlined" color="inherit">
-            Cancelar
-          </Button>
-          <Button onClick={confirmLogout} variant="contained" color="warning">
-            Sair
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog
         open={accountDialogOpen}

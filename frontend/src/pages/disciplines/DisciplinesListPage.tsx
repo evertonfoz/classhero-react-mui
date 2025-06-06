@@ -13,8 +13,9 @@ import {
   useMediaQuery,
   useTheme,
   Fab,
+  TextField,
 } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -23,23 +24,18 @@ import { useNavigate } from 'react-router-dom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
-import CourseRow from './components/listpage/CourseRow';
-import CourseFilter from './components/listpage/CourseFilter';
+import DisciplineRow from './components/listpage/DisciplineRow';
 
-
-
-interface Course {
-  course_id: string;
+interface Discipline {
+  discipline_id: string;
   name: string;
-  acronym: string;
-  status: string;
+  syllabus: string;
+  workload_hours: number;
 }
 
 interface ApiResponse {
-  data: Course[];
-  totalCourses: number;
+  data: Discipline[];
   totalPages: number;
-  currentPage: number;
 }
 
 function useDynamicLimit(rowHeight = 56) {
@@ -64,70 +60,33 @@ function useDynamicLimit(rowHeight = 56) {
   return limit;
 }
 
-export default function CoursesListPage() {
+export default function DisciplinesListPage() {
   const { logout } = useAuth();
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedcourse_id, setSelectedcourse_id] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { enqueueSnackbar } = useSnackbar();
-
-  const selectedCourse = courses.find((c) => c.course_id === selectedcourse_id);
-
-
-
+  const selected = disciplines.find((d) => d.discipline_id === selectedId);
 
   const limit = useDynamicLimit();
 
-  const openDeleteDialog = (course_id: string) => {
-    setSelectedcourse_id(course_id);
+  const openDeleteDialog = (id: string) => {
+    setSelectedId(id);
     setDialogOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedcourse_id) return;
-
-    const token = localStorage.getItem('access_token');
-    try {
-      setDeleting(true);
-
-      const response = await fetch(`http://localhost:3000/courses/${selectedcourse_id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir curso');
-      }
-
-      enqueueSnackbar('Curso excluído com sucesso!', { variant: 'success' });
-      fetchCourses();
-    } catch (error) {
-      console.error('Erro ao excluir curso:', error);
-      enqueueSnackbar('Erro ao excluir curso.', { variant: 'error' });
-    } finally {
-      setDeleting(false);
-      setDialogOpen(false);
-      setSelectedcourse_id(null);
-    }
-  };
-
-
-
-  const fetchCourses = async () => {
+  const fetchDisciplines = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) return logout();
 
@@ -137,34 +96,53 @@ export default function CoursesListPage() {
         page: currentPage.toString(),
         limit: limit.toString(),
       });
-
       if (searchTerm) query.append('search', searchTerm);
-      if (statusFilter) query.append('status', statusFilter);
 
-      const response = await fetch(`http://localhost:3000/courses/all?${query.toString()}`, {
+      const response = await fetch(`http://localhost:3000/disciplines/all?${query.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Erro ao buscar cursos');
+      if (!response.ok) throw new Error('Erro ao buscar disciplinas');
 
-      const { data, totalPages: pages } = (await response.json()) as ApiResponse;
-
-      setCourses(data);
-      setTotalPages(pages);
+      const { data, totalPages } = (await response.json()) as ApiResponse;
+      setDisciplines(data);
+      setTotalPages(totalPages);
     } catch (error) {
-      console.error(error);
+      enqueueSnackbar('Erro ao buscar disciplinas.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!selectedId) return;
+
+    const token = localStorage.getItem('access_token');
+    try {
+      setDeleting(true);
+      const response = await fetch(`http://localhost:3000/disciplines/${selectedId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error();
+
+      enqueueSnackbar('Disciplina excluída com sucesso!', { variant: 'success' });
+      fetchDisciplines();
+    } catch (error) {
+      enqueueSnackbar('Erro ao excluir disciplina.', { variant: 'error' });
+    } finally {
+      setDeleting(false);
+      setDialogOpen(false);
+      setSelectedId(null);
+    }
+  };
+
   useEffect(() => {
-    fetchCourses();
-  }, [currentPage, searchTerm, statusFilter, limit]);
+    fetchDisciplines();
+  }, [currentPage, searchTerm, limit]);
 
   return (
     <Box
-
       sx={{
         px: 4,
         py: 4,
@@ -175,25 +153,24 @@ export default function CoursesListPage() {
       }}
     >
       <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <SchoolIcon />
+        <MenuBookIcon />
         <Typography variant="h5" fontWeight="bold">
-          Lista de Cursos
+          Lista de Disciplinas
         </Typography>
       </Box>
 
-      <CourseFilter
-        searchTerm={searchTerm}
-        onSearchChange={(value) => {
+      <TextField
+        fullWidth
+        placeholder="Pesquisar por nome..."
+        variant="outlined"
+        size="small"
+        value={searchTerm}
+        onChange={(e) => {
           setCurrentPage(1);
-          setSearchTerm(value);
+          setSearchTerm(e.target.value);
         }}
-        statusFilter={statusFilter}
-        onStatusChange={(value) => {
-          setCurrentPage(1);
-          setStatusFilter(value);
-        }}
+        sx={{ mb: 3 }}
       />
-
 
       {loading ? (
         <Box display="flex" justifyContent="center" py={4}>
@@ -205,24 +182,23 @@ export default function CoursesListPage() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Nome</TableCell>
-                  <TableCell>Sigla</TableCell>
-                  <TableCell align="center">Ativo</TableCell>
-                  <TableCell align="center">Ações</TableCell>
+                  <TableCell sx={{ minWidth: isMobile ? 120 : 200 }}>Nome</TableCell>
+                  <TableCell sx={{ minWidth: isMobile ? 80 : 140 }}>Carga Horária</TableCell>
+                  <TableCell sx={{ minWidth: isMobile ? 100 : 160 }} align="center">Ações</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {courses.map((course) => (
-                  <CourseRow
-                    key={course.course_id}
-                    course={course}
-                    onEdit={(id) => navigate(`/home/cursos/editar/${id}`)}
+                {disciplines.map((discipline) => (
+                  <DisciplineRow
+                    key={discipline.discipline_id}
+                    discipline={discipline}
+                    onEdit={(id) => navigate(`/home/disciplinas/editar/${id}`)}
                     onDelete={openDeleteDialog}
+                    isMobile={isMobile}
                   />
                 ))}
               </TableBody>
-
             </Table>
           </TableContainer>
 
@@ -235,11 +211,10 @@ export default function CoursesListPage() {
         </>
       )}
 
-
       <Fab
         color="primary"
         aria-label="add"
-        onClick={() => navigate('/home/cursos/novo')}
+        onClick={() => navigate('/home/disciplinas/nova')}
         sx={{
           position: 'fixed',
           bottom: 32,
@@ -262,16 +237,13 @@ export default function CoursesListPage() {
         }
         message={
           <>
-            Tem certeza de que deseja <strong>excluir o curso "{selectedCourse?.name}"</strong>?
+            Tem certeza de que deseja excluir a disciplina <strong>"{selected?.name}"</strong>?
           </>
         }
         confirmText={deleting ? 'Excluindo...' : 'Sim, excluir'}
         cancelText="Voltar"
         confirmColor="error"
       />
-
     </Box>
-
-
   );
 }

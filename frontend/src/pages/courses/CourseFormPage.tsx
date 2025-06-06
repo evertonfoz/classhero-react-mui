@@ -1,10 +1,7 @@
 import {
     Box,
     Button,
-    Switch,
-    TextField,
     Typography,
-    FormControlLabel,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -15,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useParams } from 'react-router-dom';
+import CourseFormFields from './components/formpage/CourseFormFields';
 
 
 export default function CourseFormPage() {
@@ -46,17 +44,17 @@ export default function CourseFormPage() {
 
 
     const handleReset = () => {
-  if (isEditMode) {
-    setNome(originalNome);
-    setSigla(originalSigla);
-    setAtivo(originalAtivo);
-  } else {
-    setNome('');
-    setSigla('');
-    setAtivo(true);
-  }
-  setFormModified(false);
-};
+        if (isEditMode) {
+            setNome(originalNome);
+            setSigla(originalSigla);
+            setAtivo(originalAtivo);
+        } else {
+            setNome('');
+            setSigla('');
+            setAtivo(true);
+        }
+        setFormModified(false);
+    };
 
 
     useEffect(() => {
@@ -143,34 +141,14 @@ export default function CourseFormPage() {
                 Novo Curso
             </Typography>
 
-            <TextField
-                fullWidth
-                label="Nome do Curso *"
-                variant="outlined"
-                value={nome}
-                onChange={(e) => {
-                    const valor = e.target.value;
-                    const formatado = valor.charAt(0).toUpperCase() + valor.slice(1);
-                    setNome(formatado);
-                }}
-                sx={{ mb: 2 }}
+            <CourseFormFields
+                nome={nome}
+                sigla={sigla}
+                ativo={ativo}
+                setNome={setNome}
+                setSigla={setSigla}
+                setAtivo={setAtivo}
             />
-
-            <Box display="flex" alignItems="center" width="100%" gap={2} sx={{ mb: 3 }}>
-                <TextField
-                    label="Sigla *"
-                    variant="outlined"
-                    value={sigla}
-                    onChange={(e) => setSigla(e.target.value.toUpperCase())}
-                    inputProps={{ maxLength: 5 }}
-                    sx={{ width: 160 }}
-                />
-                <Box flexGrow={1} />
-                <FormControlLabel
-                    control={<Switch checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />}
-                    label="Curso Ativo"
-                />
-            </Box>
 
             <Box display="flex" gap={2}>
                 <Button

@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import SidebarHeader from './SidebarHeader';
 import SidebarProfile from './SidebarProfile';
 import SidebarItem from './SidebarItem';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+
 
 
 interface SidebarContentProps {
@@ -79,6 +81,16 @@ export default function SidebarContent({
             isSidebarOpen={isSidebarOpen}
             onClick={() => navigate('/home/cursos')}
           />
+
+          <SidebarItem
+            icon={<MenuBookIcon />}
+            label="Disciplinas"
+            path="/home/disciplinas"
+            visible={Boolean(user?.is_a_admin)}
+            isSidebarOpen={isSidebarOpen}
+            onClick={() => navigate('/home/disciplinas')}
+          />
+
 
           <SidebarItem
             icon={<PeopleAltIcon />}
