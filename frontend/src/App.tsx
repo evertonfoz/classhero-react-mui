@@ -34,7 +34,7 @@ function App() {
               <Route path="cursos/editar/:id" element={<CourseFormPage />} />
               <Route path="disciplinas" element={<DisciplinesListPage />} />
               <Route path="disciplinas/nova" element={<DisciplinesFormPage />} />
-              {/* <Route path="disciplinas/editar/:id" element={<DisciplinesFormPage />} /> */}
+              <Route path="disciplinas/editar/:id" element={<DisciplinesFormPage />} />
             </Route>
 
             {/* fallback */}
