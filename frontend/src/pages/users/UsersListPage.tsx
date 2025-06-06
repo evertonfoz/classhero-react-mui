@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLayout } from '../../context/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import FilterBar from './components/FilterBar';
+import useDynamicLimit from '../../hooks/useDynamicLimit';
 
 interface AvatarData {
   avatar_url: string;
@@ -42,28 +43,6 @@ interface ApiResponse {
   totalUsers: number;
   totalPages: number;
   currentPage: number;
-}
-
-function useDynamicLimit(rowHeight = 45) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [limit, setLimit] = useState(10);
-
-  useEffect(() => {
-    const calculateLimit = () => {
-      const offset = isMobile ? 220 : 280;
-      const availableHeight = window.innerHeight - offset;
-      const rows = Math.floor(availableHeight / rowHeight);
-      const capped = isMobile ? Math.min(rows, 6) : rows;
-      setLimit(capped > 0 ? capped : 4);
-    };
-
-    calculateLimit();
-    window.addEventListener('resize', calculateLimit);
-    return () => window.removeEventListener('resize', calculateLimit);
-  }, [rowHeight, isMobile]);
-
-  return limit;
 }
 
 export default function UsersListPage() {
