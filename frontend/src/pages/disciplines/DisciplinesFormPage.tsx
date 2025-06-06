@@ -1,8 +1,16 @@
-import { Box, Button, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import SuccessDialog from '../../components/ui/SuccessDialog';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DisciplineFormFields from './components/formpage/DisciplineFormFields';
 
 interface Course {
@@ -15,7 +23,6 @@ export default function DisciplinesFormPage() {
   const [ementa, setEmenta] = useState('');
   const [cargaHoraria, setCargaHoraria] = useState<number | ''>('');
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
-  const [originalSelectedCourses, setOriginalSelectedCourses] = useState<Course[]>([]);
   const [formModified, setFormModified] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -27,23 +34,25 @@ export default function DisciplinesFormPage() {
   const [originalNome, setOriginalNome] = useState('');
   const [originalEmenta, setOriginalEmenta] = useState('');
   const [originalCargaHoraria, setOriginalCargaHoraria] = useState<number | ''>('');
+  const [originalCourses, setOriginalCourses] = useState<Course[]>([]);
 
   useEffect(() => {
     const modificado =
       nome.trim() !== originalNome.trim() ||
       ementa.trim() !== originalEmenta.trim() ||
       cargaHoraria !== originalCargaHoraria ||
-      JSON.stringify(selectedCourses.map(c => c.course_id).sort()) !== JSON.stringify(originalSelectedCourses.map(c => c.course_id).sort());
+      JSON.stringify(selectedCourses.map((c) => c.course_id).sort()) !==
+      JSON.stringify(originalCourses.map((c) => c.course_id).sort());
 
     setFormModified(modificado);
-  }, [nome, ementa, cargaHoraria, selectedCourses, originalNome, originalEmenta, originalCargaHoraria, originalSelectedCourses]);
+  }, [nome, ementa, cargaHoraria, selectedCourses, originalNome, originalEmenta, originalCargaHoraria, originalCourses]);
 
   const handleReset = () => {
     if (isEditMode) {
       setNome(originalNome);
       setEmenta(originalEmenta);
       setCargaHoraria(originalCargaHoraria);
-      setSelectedCourses(originalSelectedCourses);
+      setSelectedCourses(originalCourses);
     } else {
       setNome('');
       setEmenta('');
@@ -54,34 +63,44 @@ export default function DisciplinesFormPage() {
   };
 
   useEffect(() => {
-    if (isEditMode) {
-      const fetchDiscipline = async () => {
-        const token = localStorage.getItem('access_token');
-        try {
-          const response = await fetch(`http://localhost:3000/disciplines/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!response.ok) throw new Error();
+  if (isEditMode) {
+    const fetchDiscipline = async () => {
+      const token = localStorage.getItem('access_token');
+      try {
+        const response = await fetch(`http://localhost:3000/disciplines/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error();
 
-          const { data } = await response.json();
-          setNome(data.name || '');
-          setEmenta(data.syllabus || '');
-          setCargaHoraria(data.workload_hours || '');
-          setSelectedCourses(data.courses || []);
-          setOriginalSelectedCourses(data.courses || []);
+        const { data } = await response.json();
 
-          setOriginalNome(data.name || '');
-          setOriginalEmenta(data.syllabus || '');
-          setOriginalCargaHoraria(data.workload_hours || '');
-        } catch (err) {
-          enqueueSnackbar('Erro ao carregar disciplina.', { variant: 'error' });
-          navigate('/home/disciplinas');
-        }
-      };
+        // Preenche campos principais
+        setNome(data.name || '');
+        setEmenta(data.syllabus || '');
+        setCargaHoraria(data.workload_hours || '');
+        setOriginalNome(data.name || '');
+        setOriginalEmenta(data.syllabus || '');
+        setOriginalCargaHoraria(data.workload_hours || '');
 
-      fetchDiscipline();
-    }
-  }, [id]);
+        // Preenche os cursos associados
+        const coursesFromServer = data.courses || [];
+        setSelectedCourses(
+          coursesFromServer.map((c: any) => ({
+            course_id: c.course_id,
+            name: c.name,
+          }))
+        );
+      } catch (err) {
+        enqueueSnackbar('Erro ao carregar disciplina.', { variant: 'error' });
+        navigate('/home/disciplinas');
+      }
+    };
+
+    fetchDiscipline();
+  }
+}, [id]);
+
+
 
   const handleSubmit = async () => {
     const token = localStorage.getItem('access_token');
@@ -96,7 +115,7 @@ export default function DisciplinesFormPage() {
           name: nome.trim(),
           syllabus: ementa.trim(),
           workload_hours: Number(cargaHoraria),
-          course_ids: selectedCourses.map((c) => c.course_id),
+          course_ids: selectedCourses.map((c) => c.course_id), // 👈 aqui
         }),
       });
 
@@ -116,6 +135,7 @@ export default function DisciplinesFormPage() {
       enqueueSnackbar(`Erro ao cadastrar disciplina: ${err.message}`, { variant: 'error' });
     }
   };
+
 
   return (
     <Box
@@ -138,12 +158,13 @@ export default function DisciplinesFormPage() {
         nome={nome}
         ementa={ementa}
         cargaHoraria={cargaHoraria}
-        selectedCourses={selectedCourses}
         setNome={setNome}
         setEmenta={setEmenta}
         setCargaHoraria={setCargaHoraria}
+        selectedCourses={selectedCourses}
         setSelectedCourses={setSelectedCourses}
       />
+
 
       <Box display="flex" gap={2}>
         <Button variant="outlined" disabled={!formModified} onClick={handleReset}>
@@ -158,17 +179,41 @@ export default function DisciplinesFormPage() {
         </Button>
       </Box>
 
-      <SuccessDialog
+      <Dialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        title="Disciplina cadastrada com sucesso!"
-        question="Deseja cadastrar outra disciplina?"
-        onFinalize={() => navigate('/home/disciplinas')}
-        onAgain={() => {
-          handleReset();
-          setDialogOpen(false);
+        onClose={(_, reason) => {
+          if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
+            setDialogOpen(false);
+          }
         }}
-      />
+        PaperProps={{ sx: { borderRadius: 3, p: 2, maxWidth: 420 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CheckCircleOutlineIcon color="success" />
+          <Typography variant="h6" component="span" fontWeight="bold">
+            Disciplina cadastrada com sucesso!
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography>Deseja cadastrar outra disciplina?</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => navigate('/home/disciplinas')}>
+            Finalizar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              handleReset();
+              setDialogOpen(false);
+            }}
+            autoFocus
+            sx={{ whiteSpace: 'nowrap', minWidth: 160 }}
+          >
+            Cadastrar outra
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
