@@ -2,15 +2,11 @@ import {
     Box,
     Button,
     Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import SuccessDialog from '../../components/ui/SuccessDialog';
 import { useParams } from 'react-router-dom';
 import CourseFormFields from './components/formpage/CourseFormFields';
 
@@ -171,50 +167,17 @@ export default function CourseFormPage() {
 
             </Box>
 
-            <Dialog
+            <SuccessDialog
                 open={dialogOpen}
-                hideBackdrop={false}
-                onClose={(_, reason) => {
-                    if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
-                        setDialogOpen(false);
-                    }
+                onClose={() => setDialogOpen(false)}
+                title={isEditMode ? 'Curso atualizado com sucesso!' : 'Curso cadastrado com sucesso!'}
+                question="Deseja cadastrar outro curso?"
+                onFinalize={() => navigate('/home/cursos')}
+                onAgain={() => {
+                    handleReset();
+                    setDialogOpen(false);
                 }}
-                PaperProps={{
-                    sx: {
-                        borderRadius: 3,
-                        p: 2,
-                        maxWidth: 420,
-                    },
-                }}
-            >
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircleOutlineIcon color="success" />
-                    <Typography variant="h6" component="span" fontWeight="bold">
-                        {isEditMode ? 'Curso atualizado com sucesso!' : 'Curso cadastrado com sucesso!'}
-                    </Typography>
-                </DialogTitle>
-
-                <DialogContent>
-                    <Typography>Deseja cadastrar outro curso?</Typography>
-                </DialogContent>
-
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button variant="outlined" onClick={() => navigate('/home/cursos')}>
-                        Finalizar
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => {
-                            handleReset();
-                            setDialogOpen(false);
-                        }}
-                        autoFocus
-                        sx={{ whiteSpace: 'nowrap', minWidth: 160 }}
-                    >
-                        Cadastrar outro
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            />
 
 
         </Box>
