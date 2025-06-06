@@ -1,16 +1,8 @@
-import {
-  Box,
-  Button,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import SuccessDialog from '../../components/ui/SuccessDialog';
 import DisciplineFormFields from './components/formpage/DisciplineFormFields';
 
 interface Course {
@@ -166,41 +158,17 @@ export default function DisciplinesFormPage() {
         </Button>
       </Box>
 
-      <Dialog
+      <SuccessDialog
         open={dialogOpen}
-        onClose={(_, reason) => {
-          if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
-            setDialogOpen(false);
-          }
+        onClose={() => setDialogOpen(false)}
+        title="Disciplina cadastrada com sucesso!"
+        question="Deseja cadastrar outra disciplina?"
+        onFinalize={() => navigate('/home/disciplinas')}
+        onAgain={() => {
+          handleReset();
+          setDialogOpen(false);
         }}
-        PaperProps={{ sx: { borderRadius: 3, p: 2, maxWidth: 420 } }}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CheckCircleOutlineIcon color="success" />
-          <Typography variant="h6" component="span" fontWeight="bold">
-            Disciplina cadastrada com sucesso!
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography>Deseja cadastrar outra disciplina?</Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" onClick={() => navigate('/home/disciplinas')}>
-            Finalizar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              handleReset();
-              setDialogOpen(false);
-            }}
-            autoFocus
-            sx={{ whiteSpace: 'nowrap', minWidth: 160 }}
-          >
-            Cadastrar outra
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
     </Box>
   );
 }
