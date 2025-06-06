@@ -25,6 +25,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import DisciplineRow from './components/listpage/DisciplineRow';
+import useDynamicLimit from '../../hooks/useDynamicLimit';
 
 interface Discipline {
   discipline_id: string;
@@ -36,28 +37,6 @@ interface Discipline {
 interface ApiResponse {
   data: Discipline[];
   totalPages: number;
-}
-
-function useDynamicLimit(rowHeight = 56) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [limit, setLimit] = useState(10);
-
-  useEffect(() => {
-    const calculateLimit = () => {
-      const offset = isMobile ? 220 : 280;
-      const availableHeight = window.innerHeight - offset;
-      const rows = Math.floor(availableHeight / rowHeight);
-      const capped = isMobile ? Math.min(rows, 6) : rows;
-      setLimit(capped > 0 ? capped : 4);
-    };
-
-    calculateLimit();
-    window.addEventListener('resize', calculateLimit);
-    return () => window.removeEventListener('resize', calculateLimit);
-  }, [rowHeight, isMobile]);
-
-  return limit;
 }
 
 export default function DisciplinesListPage() {
