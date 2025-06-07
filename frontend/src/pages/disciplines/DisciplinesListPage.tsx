@@ -15,6 +15,7 @@ import {
   Fab,
   TextField,
 } from '@mui/material';
+import PageContainer from '../../components/ui/PageContainer';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from 'react';
@@ -121,14 +122,9 @@ export default function DisciplinesListPage() {
   }, [currentPage, searchTerm, limit]);
 
   return (
-    <Box
+    <PageContainer
       sx={{
-        px: 4,
-        py: 4,
-        width: '100%',
         maxWidth: `calc(100vw - ${isMobile ? 0 : sidebarWidth}px)`,
-        boxSizing: 'border-box',
-        minHeight: '100vh',
       }}
     >
       <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -223,6 +219,6 @@ export default function DisciplinesListPage() {
         cancelText="Voltar"
         confirmColor="error"
       />
-    </Box>
+    </PageContainer>
   );
 }

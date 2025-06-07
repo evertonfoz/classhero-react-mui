@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import PageContainer from '../../components/ui/PageContainer';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -127,14 +128,9 @@ export default function UsersListPage() {
   }, [currentPage, searchTerm, filters, limit]);
 
   return (
-    <Box
+    <PageContainer
       sx={{
-        px: 4,
-        py: 4,
-        width: '100%',
         maxWidth: `calc(100vw - ${isMobile ? 0 : sidebarWidth}px)`,
-        boxSizing: 'border-box',
-        minHeight: '100vh',
       }}
     >
       <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -227,6 +223,6 @@ export default function UsersListPage() {
           </Box>
         </>
       )}
-    </Box>
+    </PageContainer>
   );
 }
