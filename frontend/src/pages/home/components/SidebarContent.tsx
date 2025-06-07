@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
 import SchoolIcon from '@mui/icons-material/School';
+import ClassIcon from '@mui/icons-material/Class';
 import { useNavigate } from 'react-router-dom';
 import SidebarHeader from './SidebarHeader';
 import SidebarProfile from './SidebarProfile';
@@ -89,6 +90,15 @@ export default function SidebarContent({
             visible={Boolean(user?.is_a_admin)}
             isSidebarOpen={isSidebarOpen}
             onClick={() => navigate('/home/disciplinas')}
+          />
+
+          <SidebarItem
+            icon={<ClassIcon />}
+            label="Turmas"
+            path="/home/turmas"
+            visible={Boolean(user?.is_a_admin)}
+            isSidebarOpen={isSidebarOpen}
+            onClick={() => navigate('/home/turmas')}
           />
 
 
