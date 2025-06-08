@@ -125,9 +125,30 @@ export default function ClassFormFields({
 
   return (
     <Box display="flex" flexDirection="column" gap={2} mb={3} width="100%">
-      <TextField label="Código" value={code} onChange={(e) => setCode(e.target.value)} fullWidth />
-      <TextField label="Ano" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} fullWidth />
-      <TextField label="Semestre" type="number" value={semester} onChange={(e) => setSemester(Number(e.target.value))} fullWidth />
+      <Box display="flex" gap={2}>
+        <TextField
+          label="Código"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          fullWidth
+          inputProps={{ style: { textTransform: 'uppercase' } }}
+        />
+
+        <TextField
+          label="Ano"
+          type="number"
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          sx={{ maxWidth: 150 }}
+        />
+        <TextField
+          label="Semestre"
+          type="number"
+          value={semester}
+          onChange={(e) => setSemester(Number(e.target.value))}
+          sx={{ maxWidth: 150 }}
+        />
+      </Box>
 
       <Autocomplete
         multiple

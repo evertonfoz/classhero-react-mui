@@ -36,6 +36,8 @@ export default function ClassFormPage() {
   const [origDisciplines, setOrigDisciplines] = useState<SelectedDiscipline[]>([]);
   const [origStudents, setOrigStudents] = useState<StudentOption[]>([]);
 
+  const hasDisciplineWithTeacher = disciplines.some(d => d.teacher && d.teacher.email);
+
   useEffect(() => {
     const modified =
       code.trim() !== origCode.trim() ||
@@ -43,7 +45,7 @@ export default function ClassFormPage() {
       semester !== origSemester ||
       JSON.stringify(disciplines) !== JSON.stringify(origDisciplines) ||
       JSON.stringify(students.map((s) => s.email).sort()) !==
-        JSON.stringify(origStudents.map((s) => s.email).sort());
+      JSON.stringify(origStudents.map((s) => s.email).sort());
     setFormModified(modified);
   }, [code, year, semester, disciplines, students, origCode, origYear, origSemester, origDisciplines, origStudents]);
 
@@ -167,7 +169,18 @@ export default function ClassFormPage() {
         <Button variant="outlined" disabled={!formModified} onClick={handleReset}>
           Cancelar
         </Button>
-        <Button variant="contained" disabled={!formModified || !code.trim() || !year || !semester} onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          disabled={
+            !formModified ||
+            !code.trim() ||
+            !year ||
+            !semester ||
+            !hasDisciplineWithTeacher
+          }
+          onClick={handleSubmit}
+        >
+
           {isEditMode ? 'Salvar Alterações' : 'Cadastrar'}
         </Button>
       </Box>

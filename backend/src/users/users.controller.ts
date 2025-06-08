@@ -7,6 +7,7 @@ import { CreateAvatarDto } from './dto/create-avatar.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
 import { SetAvatarByUrlDto } from './dto/set-avatar-by-url.dto';
+import { SearchUserOptionsDto } from './dto/search-user-options.dto';
 
 @Controller('users')
 export class UsersController {
@@ -20,6 +21,11 @@ export class UsersController {
     @Get('by-email')
     async getUserByEmail(@Query() query: FindUserByEmailDto) {
         return this.usersService.findByEmail(query.email);
+    }
+
+    @Get('options')
+    async getUserOptions(@Query() query: SearchUserOptionsDto) {
+        return this.usersService.getUserOptions(query);
     }
 
     @Post('avatar')
@@ -46,7 +52,7 @@ export class UsersController {
 
     @Post('avatar/url')
     async setAvatarByUrl(@Body() body: SetAvatarByUrlDto) {
-    return this.usersService.setAvatarByUrl(body.email, body.avatar_url);
+        return this.usersService.setAvatarByUrl(body.email, body.avatar_url);
     }
 
 }

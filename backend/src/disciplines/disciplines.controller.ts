@@ -13,6 +13,11 @@ export class DisciplinesController {
         return this.disciplinesService.getAll(searchDisciplinesDto);
     }
 
+    @Get('search')
+    async search(@Query('q') search?: string) {
+        return await this.disciplinesService.searchDisciplines(search);
+    }
+
     @Get(':id')
     async findDisciplineById(@Param('id') id: string) {
         return this.disciplinesService.findById(id);
@@ -23,11 +28,6 @@ export class DisciplinesController {
         return await this.disciplinesService.createDisciplineWithCourses(createDisciplineDto);
     }
 
-
-    // @Post()
-    // create(@Body() dto: CreateDisciplineDto) {
-    //     return this.disciplinesService.create(dto);
-    // }
 
     @Put(':id')
     async updateDiscipline(

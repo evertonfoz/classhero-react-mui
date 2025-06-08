@@ -44,13 +44,35 @@ export class DisciplinesService {
         };
     }
 
+    async searchDisciplines(search?: string) {
+        try {
+            let query = this.supabase
+                .from('disciplines')
+                .select('discipline_id, name')
 
+            if (search) {
+                query = query.ilike('name', `%${search}%`);
+            }
+
+            const { data, error } = await query.order('name', { ascending: true });
+
+            if (error) {
+                console.error('Erro ao buscar disciplinas:', error.message);
+                throw new InternalServerErrorException('Erro ao buscar disciplinas');
+            }
+
+            return data;
+        } catch (err) {
+            console.error('Erro no searchDisciplines:', err.message);
+            throw new InternalServerErrorException('Erro interno ao buscar disciplinas');
+        }
+    }
 
     async findById(disciplineId: string) {
-  try {
-    const { data, error } = await this.supabase
-      .from('disciplines')
-      .select(`
+        try {
+            const { data, error } = await this.supabase
+                .from('disciplines')
+                .select(`
         discipline_id,
         name,
         syllabus,
@@ -62,41 +84,25 @@ export class DisciplinesService {
           )
         )
       `)
-      .eq('discipline_id', disciplineId)
-      .single();
+                .eq('discipline_id', disciplineId)
+                .single();
 
-    if (error) {
-      console.error('Erro ao buscar disciplina por ID:', error.message);
-      throw new InternalServerErrorException('Disciplina não encontrada ou erro na busca');
+            if (error) {
+                console.error('Erro ao buscar disciplina por ID:', error.message);
+                throw new InternalServerErrorException('Disciplina não encontrada ou erro na busca');
+            }
+
+            // 🔄 Normaliza os cursos para o formato esperado no frontend
+            const courses = (data.courses_disciplines || []).map((cd: any) => cd.course);
+
+            return { data: { ...data, courses } };
+        } catch (err) {
+            console.error('Erro no findById:', err.message);
+            throw new InternalServerErrorException('Erro interno ao buscar disciplina');
+        }
     }
 
-    // 🔄 Normaliza os cursos para o formato esperado no frontend
-    const courses = (data.courses_disciplines || []).map((cd: any) => cd.course);
 
-    return { data: { ...data, courses } };
-  } catch (err) {
-    console.error('Erro no findById:', err.message);
-    throw new InternalServerErrorException('Erro interno ao buscar disciplina');
-  }
-}
-
-
-    // async create(dto: CreateDisciplineDto) {
-    //     const { data, error } = await this.supabase
-    //         .from('disciplines')
-    //         .insert([{ ...dto }])
-    //         .select()
-    //         .single();
-
-    //     if (error) {
-    //         if (error.code === '23505') {
-    //             throw new Error('Já existe uma disciplina com esse nome.');
-    //         }
-    //         throw new Error(error.message);
-    //     }
-
-    //     return { message: 'Disciplina cadastrada com sucesso', data };
-    // }
     async createDisciplineWithCourses(dto: CreateDisciplineDto) {
         try {
             const { course_ids, ...disciplineData } = dto;

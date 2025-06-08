@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
+import { SearchUserOptionsDto } from './dto/search-user-options.dto';
 
 @Injectable()
 export class UsersService {
@@ -101,8 +102,6 @@ export class UsersService {
         }
     }
 
-
-
     async findByEmail(email: string) {
         try {
             const { data, error } = await this.supabase
@@ -133,6 +132,39 @@ export class UsersService {
         } catch (err) {
             console.error('Erro no findByEmail:', err.message);
             throw new InternalServerErrorException('Erro interno ao buscar usuário');
+        }
+    }
+
+    async getUserOptions(query: SearchUserOptionsDto) {
+        try {
+            let request = this.supabase
+                .from('users')
+                .select('email, name')
+                .order('name', { ascending: true });
+
+            if (query.is_a_student === 'true') {
+                request = request.eq('is_a_student', true);
+            }
+
+            if (query.is_a_teacher === 'true') {
+                request = request.eq('is_a_teacher', true);
+            }
+
+            if (query.search) {
+                request = request.ilike('name', `%${query.search}%`);
+            }
+
+            const { data, error } = await request;
+
+            if (error) {
+                console.error('Erro ao buscar opções de usuários:', error.message);
+                throw new InternalServerErrorException('Erro ao buscar usuários');
+            }
+
+            return { data };
+        } catch (err) {
+            console.error('Erro no getUserOptions:', err.message);
+            throw new InternalServerErrorException('Erro ao buscar usuários');
         }
     }
 
