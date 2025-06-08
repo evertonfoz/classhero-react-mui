@@ -180,20 +180,27 @@ export default function ClassFormFields({
         <FormControl fullWidth key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
           <InputLabel>Professor para {sd.discipline.name}</InputLabel>
           <Select
-            value={sd.teacher?.email || ''}
-            label={`Professor para ${sd.discipline.name}`}
-            onChange={(e) => {
-              const teacher = teacherOptions.find((t) => t.email === e.target.value);
-              handleTeacherSelect(i, teacher || null);
-            }}
-          >
-            <MenuItem value="">
-              <em>Nenhum</em>
-            </MenuItem>
-            {teacherOptions.map((t) => (
-              <MenuItem key={t.email} value={t.email}>{t.name}</MenuItem>
-            ))}
-          </Select>
+  value={
+    teacherOptions.some((t) => t.email === sd.teacher?.email)
+      ? sd.teacher?.email
+      : ''
+  }
+  label={`Professor para ${sd.discipline.name}`}
+  onChange={(e) => {
+    const teacher = teacherOptions.find((t) => t.email === e.target.value);
+    handleTeacherSelect(i, teacher || null);
+  }}
+>
+  <MenuItem value="">
+    <em>Nenhum</em>
+  </MenuItem>
+  {teacherOptions.map((t) => (
+    <MenuItem key={t.email} value={t.email}>
+      {t.name}
+    </MenuItem>
+  ))}
+</Select>
+
         </FormControl>
       ))}
 

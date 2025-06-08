@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuid } from 'uuid';
@@ -49,10 +49,6 @@ export class ClassesService {
       // 1. Inserir a turma
       const { code, year, semester, disciplines, student_emails } = dto;
 
-      console.log('disciplines', disciplines);
-      console.log('student_emails', student_emails);
-
-
       const { data: classData, error: insertError } = await this.supabase
         .from('classes')
         .insert({ code, year, semester })
@@ -74,7 +70,6 @@ export class ClassesService {
           teacher_email: d.teacher_email || null,
         }));
 
-        console.log('disciplineEntries', disciplineEntries);
 
         const { error: disciplineError } = await this.supabase
           .from('class_disciplines')
@@ -93,8 +88,6 @@ export class ClassesService {
           user_email: email,
         }));
 
-                console.log('studentEntries', studentEntries);
-
         const { error: studentError } = await this.supabase
           .from('class_users')
           .insert(studentEntries);
@@ -111,9 +104,79 @@ export class ClassesService {
       throw new InternalServerErrorException('Erro ao criar turma');
     }
   }
-  // findOne(id: string) {
-  //   return this.classes.find((c) => c.class_id === id);
-  // }
+
+  async findClassById(class_id: string) {
+    try {
+      // 1. Buscar turma
+      const { data: classData, error: classError } = await this.supabase
+        .from('classes')
+        .select('class_id, code, year, semester')
+        .eq('class_id', class_id)
+        .single();
+
+      if (classError || !classData) {
+        throw new NotFoundException('Turma não encontrada');
+      }
+
+      // 2. Buscar disciplinas + professor
+      const { data: disciplines, error: disciplinesError } = await this.supabase
+        .from('class_disciplines')
+        .select(`
+        discipline_id,
+        teacher_email,
+        disciplines(name),
+        users(name)
+      `)
+        .eq('class_id', class_id);
+
+      if (disciplinesError) {
+        console.error('Erro ao buscar disciplinas:', disciplinesError.message);
+        throw new InternalServerErrorException('Erro ao buscar disciplinas da turma');
+      }
+
+      // 3. Buscar alunos
+      const { data: students, error: studentsError } = await this.supabase
+        .from('class_users')
+        .select('user_email, users(name)')
+        .eq('class_id', class_id);
+
+      if (studentsError) {
+        console.error('Erro ao buscar alunos:', studentsError.message);
+        throw new InternalServerErrorException('Erro ao buscar alunos da turma');
+      }
+
+      return {
+        data: {
+          ...classData,
+          disciplines: disciplines.map((d) => ({
+            discipline_id: d.discipline_id,
+            name:
+              typeof d.disciplines === 'object' && 'name' in d.disciplines
+                ? d.disciplines.name
+                : null,
+            teacher_email: d.teacher_email,
+            teacher_name:
+              typeof d.users === 'object' && 'name' in d.users
+                ? d.users.name
+                : null,
+          })),
+          students: students.map((s) => ({
+            email: s.user_email,
+            name:
+              typeof s.users === 'object' && 'name' in s.users
+                ? s.users.name
+                : null,
+          })),
+        },
+      };
+
+
+    } catch (err) {
+      console.error('Erro no findClassById:', err.message);
+      throw err;
+    }
+  }
+
 
 
   // update(id: string, data: Omit<Class, 'class_id'>) {

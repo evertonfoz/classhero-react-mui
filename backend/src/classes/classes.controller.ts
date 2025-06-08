@@ -21,6 +21,12 @@ export class ClassesController {
     return this.classesService.getAll(searchClassesDto);
   }
 
+  @Get(':id')
+  async findOne(@Param('id') class_id: string) {
+    return this.classesService.findClassById(class_id);
+  }
+
+
   @Post()
   async create(@Body() body: CreateClassDto) {
     return await this.classesService.createClassWithLinks(body);
@@ -33,13 +39,6 @@ export class ClassesController {
   // ): Promise<any> {
   //   const expires = new Date(Date.now() + (minutes || 60) * 60000);
   //   return await this.service.generateCode(id, expires);
-  // }
-
-  // @Get(':id')
-  // async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<{ data?: Class; message?: string }> {
-  //   const found = await this.service.findOne(id);
-  //   if (!found) return { message: 'Not found' };
-  //   return { data: found };
   // }
 
 

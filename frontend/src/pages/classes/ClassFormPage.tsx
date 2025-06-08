@@ -76,6 +76,7 @@ export default function ClassFormPage() {
           });
           if (!response.ok) throw new Error();
           const { data } = await response.json();
+
           setCode(data.code);
           setYear(data.year);
           setSemester(data.semester);
