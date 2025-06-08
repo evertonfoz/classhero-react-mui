@@ -11,6 +11,8 @@ import CoursesListPage from './pages/courses/CoursesListPage';
 import CourseFormPage from './pages/courses/CourseFormPage';
 import DisciplinesListPage from './pages/disciplines/DisciplinesListPage';
 import DisciplinesFormPage from './pages/disciplines/DisciplinesFormPage';
+import ClassesListPage from './pages/classes/ClassesListPage';
+import ClassFormPage from './pages/classes/ClassFormPage';
 
 function App() {
   return (
@@ -35,6 +37,9 @@ function App() {
               <Route path="disciplinas" element={<DisciplinesListPage />} />
               <Route path="disciplinas/nova" element={<DisciplinesFormPage />} />
               <Route path="disciplinas/editar/:id" element={<DisciplinesFormPage />} />
+              <Route path="turmas" element={<ClassesListPage />} />
+              <Route path="turmas/nova" element={<ClassFormPage />} />
+              <Route path="turmas/editar/:id" element={<ClassFormPage />} />
             </Route>
 
             {/* fallback */}

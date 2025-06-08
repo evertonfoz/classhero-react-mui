@@ -3,6 +3,7 @@ import {
   Button,
   Typography,
 } from '@mui/material';
+import PageContainer from '../../components/ui/PageContainer';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -134,18 +135,7 @@ export default function DisciplinesFormPage() {
 
 
   return (
-    <Box
-      sx={{
-        px: 4,
-        py: 4,
-        width: '100%',
-        boxSizing: 'border-box',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-      }}
-    >
+    <PageContainer>
       <Typography variant="h6" fontWeight="bold" gutterBottom>
         {isEditMode ? 'Editar Disciplina' : 'Nova Disciplina'}
       </Typography>
@@ -186,6 +176,6 @@ export default function DisciplinesFormPage() {
           setDialogOpen(false);
         }}
       />
-    </Box>
+    </PageContainer>
   );
 }
