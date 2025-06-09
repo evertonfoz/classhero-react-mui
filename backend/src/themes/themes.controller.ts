@@ -19,6 +19,7 @@ export class ThemesController {
 
   @Put(':id')
   update(@Param('id') id: string, @Body() dto: UpdateThemeDto) {
+    console.log('Atualizando tema:', id, dto);
     return this.themesService.updateTheme(id, dto);
   }
 
