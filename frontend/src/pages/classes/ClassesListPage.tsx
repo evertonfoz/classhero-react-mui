@@ -17,8 +17,8 @@ import {
 import PageContainer from '../../components/ui/PageContainer';
 import ClassIcon from '@mui/icons-material/Class';
 import AddIcon from '@mui/icons-material/Add';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
+
 import { useLayout } from '../../context/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -26,7 +26,7 @@ import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import ClassRow from './components/listpage/ClassRow';
 import ClassFilter from './components/listpage/ClassFilter';
-import useDynamicLimit from '../../hooks/useDynamicLimit';
+import usePaginatedFetch from '../../hooks/usePaginatedFetch';
 
 interface ClassItem {
   class_id: string;
@@ -35,30 +35,37 @@ interface ClassItem {
   semester: number;
 }
 
-interface ApiResponse {
-  data: ClassItem[];
-  totalPages: number;
-}
-
 export default function ClassesListPage() {
-  const { logout } = useAuth();
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
-  const [items, setItems] = useState<ClassItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: items,
+    loading,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    fetchData: fetchClasses,
+  } = usePaginatedFetch<ClassItem>(
+    (page, limit) => {
+      const query = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (searchTerm) query.append('search', searchTerm);
+      return `http://localhost:3000/classes/all?${query.toString()}`;
+    },
+    [searchTerm],
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
   const selectedItem = items.find((c) => c.class_id === selectedId);
-  const limit = useDynamicLimit();
 
   const openDeleteDialog = (id: string) => {
     setSelectedId(id);
@@ -95,33 +102,6 @@ export default function ClassesListPage() {
   };
 
 
-  const fetchClasses = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return logout();
-    setLoading(true);
-    try {
-      const query = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-      if (searchTerm) query.append('search', searchTerm);
-      const response = await fetch(`http://localhost:3000/classes/all?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Erro ao buscar turmas');
-      const { data, totalPages: pages } = (await response.json()) as ApiResponse;
-      setItems(data);
-      setTotalPages(pages);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchClasses();
-  }, [currentPage, searchTerm, limit]);
 
   return (
     <PageContainer sx={{ maxWidth: `calc(100vw - ${isMobile ? 0 : sidebarWidth}px)` }}>

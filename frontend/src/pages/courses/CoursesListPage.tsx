@@ -17,8 +17,7 @@ import {
 import PageContainer from '../../components/ui/PageContainer';
 import SchoolIcon from '@mui/icons-material/School';
 import AddIcon from '@mui/icons-material/Add';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
 import { useLayout } from '../../context/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -26,7 +25,7 @@ import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import CourseRow from './components/listpage/CourseRow';
 import CourseFilter from './components/listpage/CourseFilter';
-import useDynamicLimit from '../../hooks/useDynamicLimit';
+import usePaginatedFetch from '../../hooks/usePaginatedFetch';
 
 
 
@@ -37,26 +36,34 @@ interface Course {
   status: string;
 }
 
-interface ApiResponse {
-  data: Course[];
-  totalCourses: number;
-  totalPages: number;
-  currentPage: number;
-}
-
 export default function CoursesListPage() {
-  const { logout } = useAuth();
+export default function CoursesListPage() {
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
-  const [courses, setCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: courses,
+    loading,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    fetchData: fetchCourses,
+  } = usePaginatedFetch<Course>(
+    (page, limit) => {
+      const query = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (searchTerm) query.append('search', searchTerm);
+      if (statusFilter) query.append('status', statusFilter);
+      return `http://localhost:3000/courses/all?${query.toString()}`;
+    },
+    [searchTerm, statusFilter],
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedcourse_id, setSelectedcourse_id] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -64,11 +71,6 @@ export default function CoursesListPage() {
   const { enqueueSnackbar } = useSnackbar();
 
   const selectedCourse = courses.find((c) => c.course_id === selectedcourse_id);
-
-
-
-
-  const limit = useDynamicLimit();
 
   const openDeleteDialog = (course_id: string) => {
     setSelectedcourse_id(course_id);
@@ -107,40 +109,6 @@ export default function CoursesListPage() {
 
 
 
-  const fetchCourses = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return logout();
-
-    setLoading(true);
-    try {
-      const query = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-
-      if (searchTerm) query.append('search', searchTerm);
-      if (statusFilter) query.append('status', statusFilter);
-
-      const response = await fetch(`http://localhost:3000/courses/all?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Erro ao buscar cursos');
-
-      const { data, totalPages: pages } = (await response.json()) as ApiResponse;
-
-      setCourses(data);
-      setTotalPages(pages);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCourses();
-  }, [currentPage, searchTerm, statusFilter, limit]);
 
   return (
     <PageContainer
