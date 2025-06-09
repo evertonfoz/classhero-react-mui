@@ -9,6 +9,7 @@ import ClassFormFields from './components/formpage/ClassFormFields';
 interface SelectedDiscipline {
   discipline: { discipline_id: string; name: string };
   teacher?: { email: string; name: string } | null;
+  class_discipline_id?: string;
 }
 
 interface StudentOption {
@@ -92,7 +93,8 @@ export default function ClassFormPage() {
             return {
               discipline: { discipline_id: cd.discipline_id, name: cd.name },
               teacher: cd.teacher_email ? { email: cd.teacher_email, name: cd.teacher_name } : null,
-            };
+              class_discipline_id: cd.class_discipline_id,
+            } as SelectedDiscipline;
           });
 
           const updatedStudents: StudentOption[] = [];

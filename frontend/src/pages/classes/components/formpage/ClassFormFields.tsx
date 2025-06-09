@@ -1,5 +1,6 @@
-import { Box, TextField, Autocomplete, CircularProgress, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Box, TextField, Autocomplete, CircularProgress, MenuItem, Select, FormControl, InputLabel, Button } from '@mui/material';
 import { useEffect, useState } from 'react';
+import ThemesDialog from '../themes/ThemesDialog';
 
 interface DisciplineOption {
   discipline_id: string;
@@ -19,6 +20,7 @@ interface StudentOption {
 interface SelectedDiscipline {
   discipline: DisciplineOption;
   teacher?: TeacherOption | null;
+  class_discipline_id?: string;
 }
 
 interface Props {
@@ -60,6 +62,7 @@ export default function ClassFormFields({
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchDis, setSearchDis] = useState('');
   const [searchStu, setSearchStu] = useState('');
+  const [openThemeIndex, setOpenThemeIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDisciplines = async () => {
@@ -183,31 +186,42 @@ export default function ClassFormFields({
       />
 
       {disciplines.map((sd, i) => (
-        <FormControl fullWidth key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
-          <InputLabel>Professor para {sd.discipline.name}</InputLabel>
-          <Select
-            value={
-              teacherOptions.some((t) => t.email === sd.teacher?.email)
-                ? sd.teacher?.email
-                : ''
-            }
-            label={`Professor para ${sd.discipline.name}`}
-            onChange={(e) => {
-              const teacher = teacherOptions.find((t) => t.email === e.target.value);
-              handleTeacherSelect(i, teacher || null);
-            }}
-          >
-            <MenuItem value="">
-              <em>Nenhum</em>
-            </MenuItem>
-            {teacherOptions.map((t) => (
-              <MenuItem key={t.email} value={t.email}>
-                {t.name}
+        <Box key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
+          <FormControl fullWidth>
+            <InputLabel>Professor para {sd.discipline.name}</InputLabel>
+            <Select
+              value={
+                teacherOptions.some((t) => t.email === sd.teacher?.email)
+                  ? sd.teacher?.email
+                  : ''
+              }
+              label={`Professor para ${sd.discipline.name}`}
+              onChange={(e) => {
+                const teacher = teacherOptions.find((t) => t.email === e.target.value);
+                handleTeacherSelect(i, teacher || null);
+              }}
+            >
+              <MenuItem value="">
+                <em>Nenhum</em>
               </MenuItem>
-            ))}
-          </Select>
-
-        </FormControl>
+              {teacherOptions.map((t) => (
+                <MenuItem key={t.email} value={t.email}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {sd.teacher && (
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{ mt: 1 }}
+              onClick={() => setOpenThemeIndex(i)}
+            >
+              Gerenciar Temas
+            </Button>
+          )}
+        </Box>
       ))}
 
       <Autocomplete
@@ -234,6 +248,19 @@ export default function ClassFormFields({
             }}
           />
         )}
+      />
+      <ThemesDialog
+        open={openThemeIndex !== null}
+        onClose={() => setOpenThemeIndex(null)}
+        classDisciplineId={
+          openThemeIndex !== null ? disciplines[openThemeIndex].class_discipline_id || '' : ''
+        }
+        disciplineName={
+          openThemeIndex !== null ? disciplines[openThemeIndex].discipline.name : undefined
+        }
+        teacherName={
+          openThemeIndex !== null ? disciplines[openThemeIndex].teacher?.name || null : null
+        }
       />
     </Box>
   );
