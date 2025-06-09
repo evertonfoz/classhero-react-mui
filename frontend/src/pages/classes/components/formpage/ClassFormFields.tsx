@@ -1,6 +1,16 @@
-import { Box, TextField, Autocomplete, CircularProgress, MenuItem, Select, FormControl, InputLabel, Button } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Autocomplete,
+  CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Button,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
-import ThemesDialog from '../themes/ThemesDialog';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface DisciplineOption {
   discipline_id: string;
@@ -62,15 +72,17 @@ export default function ClassFormFields({
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchDis, setSearchDis] = useState('');
   const [searchStu, setSearchStu] = useState('');
-  const [openThemeIndex, setOpenThemeIndex] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const { id: classId } = useParams(); // <- "id" vem de /turmas/editar/:id
 
   useEffect(() => {
     const fetchDisciplines = async () => {
       setLoadingDisciplines(true);
       try {
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`http://localhost:3000/disciplines/search?q=${searchDis}`,
-          { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch(`http://localhost:3000/disciplines/search?q=${searchDis}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await response.json();
         setDisciplineOptions(data);
       } catch {
@@ -87,8 +99,9 @@ export default function ClassFormFields({
       setLoadingTeachers(true);
       try {
         const token = localStorage.getItem('access_token');
-        const res = await fetch('http://localhost:3000/users/all?is_a_teacher=true',
-          { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('http://localhost:3000/users/all?is_a_teacher=true', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const { data } = await res.json();
         setTeacherOptions(data);
       } catch {
@@ -105,8 +118,12 @@ export default function ClassFormFields({
       setLoadingStudents(true);
       try {
         const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://localhost:3000/users/all?is_a_student=true&search=${searchStu}`,
-          { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(
+          `http://localhost:3000/users/all?is_a_student=true&search=${searchStu}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const { data } = await res.json();
         setStudentOptions(data);
       } catch {
@@ -134,6 +151,7 @@ export default function ClassFormFields({
 
   return (
     <Box display="flex" flexDirection="column" gap={2} mb={3} width="100%">
+      {/* Código, ano, semestre */}
       <Box display="flex" gap={2}>
         <TextField
           label="Código"
@@ -159,6 +177,7 @@ export default function ClassFormFields({
         />
       </Box>
 
+      {/* Disciplinas */}
       <Autocomplete
         multiple
         options={disciplineOptions}
@@ -178,13 +197,17 @@ export default function ClassFormFields({
             InputProps={{
               ...params.InputProps,
               endAdornment: (
-                <>{loadingDisciplines ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>
+                <>
+                  {loadingDisciplines ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
               ),
             }}
           />
         )}
       />
 
+      {/* Professores por disciplina + botão de temas */}
       {disciplines.map((sd, i) => (
         <Box key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
           <FormControl fullWidth>
@@ -211,12 +234,20 @@ export default function ClassFormFields({
               ))}
             </Select>
           </FormControl>
-          {sd.teacher && (
+          {sd.teacher && sd.class_discipline_id && classId && (
             <Button
               variant="outlined"
               size="small"
               sx={{ mt: 1 }}
-              onClick={() => setOpenThemeIndex(i)}
+              onClick={() =>
+                navigate(`/home/turmas/${classId}/disciplinas/${sd.class_discipline_id}/temas`, {
+                  state: {
+                    disciplineName: sd.discipline.name,
+                    teacherName: sd.teacher?.name || '',
+                    classCode: code
+                  }
+                })
+              }
             >
               Gerenciar Temas
             </Button>
@@ -224,6 +255,7 @@ export default function ClassFormFields({
         </Box>
       ))}
 
+      {/* Alunos */}
       <Autocomplete
         multiple
         options={studentOptions}
@@ -243,24 +275,14 @@ export default function ClassFormFields({
             InputProps={{
               ...params.InputProps,
               endAdornment: (
-                <>{loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>
+                <>
+                  {loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
               ),
             }}
           />
         )}
-      />
-      <ThemesDialog
-        open={openThemeIndex !== null}
-        onClose={() => setOpenThemeIndex(null)}
-        classDisciplineId={
-          openThemeIndex !== null ? disciplines[openThemeIndex].class_discipline_id || '' : ''
-        }
-        disciplineName={
-          openThemeIndex !== null ? disciplines[openThemeIndex].discipline.name : undefined
-        }
-        teacherName={
-          openThemeIndex !== null ? disciplines[openThemeIndex].teacher?.name || null : null
-        }
       />
     </Box>
   );

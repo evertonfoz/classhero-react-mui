@@ -44,6 +44,8 @@ export default function ThemesDialog({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const isFormValid = title.trim().length > 0 && description.trim().length > 0;
+
 
   useEffect(() => {
     if (!open) return;
@@ -75,6 +77,7 @@ export default function ThemesDialog({
   const handleSave = async () => {
     const token = localStorage.getItem('access_token');
     const payload = { title, description, class_discipline_id: classDisciplineId };
+
     try {
       const res = await fetch(
         `http://localhost:3000/themes${editingId ? `/${editingId}` : ''}`,
@@ -106,7 +109,7 @@ export default function ThemesDialog({
     if (!deleteId) return;
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch(`http://localhost:3000/themes/${deleteId}` , {
+      const res = await fetch(`http://localhost:3000/themes/${deleteId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -120,6 +123,14 @@ export default function ThemesDialog({
     }
   };
 
+  const handleClose = () => {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    onClose();
+  };
+
+
   const startEdit = (theme: Theme) => {
     setEditingId(theme.id);
     setTitle(theme.title);
@@ -129,13 +140,18 @@ export default function ThemesDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        <Typography variant="h6" fontWeight="bold">
-          Temas de {disciplineName}
-        </Typography>
-        {teacherName && (
-          <Typography variant="subtitle2">Professor: {teacherName}</Typography>
-        )}
+        <Box display="flex" flexDirection="column">
+          <Typography variant="h6" component="span" fontWeight="bold">
+            Temas de {disciplineName}
+          </Typography>
+          {teacherName && (
+            <Typography variant="subtitle2" component="span">
+              Professor: {teacherName}
+            </Typography>
+          )}
+        </Box>
       </DialogTitle>
+
       <DialogContent>
         <List>
           {themes.map((t) => (
@@ -183,18 +199,23 @@ export default function ThemesDialog({
         </Box>
       </DialogContent>
       <DialogActions>
-        {editingId && (
-          <Button onClick={resetForm} variant="outlined" color="inherit">
-            Cancelar Edição
-          </Button>
-        )}
-        <Button onClick={onClose} variant="outlined" color="inherit">
-          Fechar
-        </Button>
-        <Button onClick={handleSave} variant="contained">
-          {editingId ? 'Salvar' : 'Adicionar'}
-        </Button>
-      </DialogActions>
+  <Button
+    onClick={editingId ? resetForm : handleClose}
+    variant="outlined"
+    color="inherit"
+  >
+    {editingId ? 'Cancelar' : 'Fechar'}
+  </Button>
+
+  <Button
+    onClick={handleSave}
+    variant="contained"
+    disabled={!isFormValid}
+  >
+    {editingId ? 'Salvar' : 'Adicionar'}
+  </Button>
+</DialogActions>
+
       <ConfirmationDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}

@@ -13,6 +13,7 @@ import DisciplinesListPage from './pages/disciplines/DisciplinesListPage';
 import DisciplinesFormPage from './pages/disciplines/DisciplinesFormPage';
 import ClassesListPage from './pages/classes/ClassesListPage';
 import ClassFormPage from './pages/classes/ClassFormPage';
+import ThemesPage from './pages/themes/ThemesPage';
 
 function App() {
   return (
@@ -40,6 +41,10 @@ function App() {
               <Route path="turmas" element={<ClassesListPage />} />
               <Route path="turmas/nova" element={<ClassFormPage />} />
               <Route path="turmas/editar/:id" element={<ClassFormPage />} />
+              <Route
+                path="turmas/:classId/disciplinas/:classDisciplineId/temas"
+                element={<ThemesPage />}
+              />
             </Route>
 
             {/* fallback */}

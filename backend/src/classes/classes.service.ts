@@ -107,76 +107,78 @@ export class ClassesService {
   }
 
   async findClassById(class_id: string) {
-    try {
-      // 1. Buscar turma
-      const { data: classData, error: classError } = await this.supabase
-        .from('classes')
-        .select('class_id, code, year, semester')
-        .eq('class_id', class_id)
-        .single();
+  try {
+    // 1. Buscar turma
+    const { data: classData, error: classError } = await this.supabase
+      .from('classes')
+      .select('class_id, code, year, semester')
+      .eq('class_id', class_id)
+      .single();
 
-      if (classError || !classData) {
-        throw new NotFoundException('Turma não encontrada');
-      }
+    if (classError || !classData) {
+      throw new NotFoundException('Turma não encontrada');
+    }
 
-      // 2. Buscar disciplinas + professor
-      const { data: disciplines, error: disciplinesError } = await this.supabase
-        .from('class_disciplines')
-        .select(`
+    // 2. Buscar disciplinas + professor
+    const { data: disciplines, error: disciplinesError } = await this.supabase
+      .from('class_disciplines')
+      .select(`
+        class_discipline_id,
         discipline_id,
         teacher_email,
         disciplines(name),
         users(name)
       `)
-        .eq('class_id', class_id);
+      .eq('class_id', class_id);
 
-      if (disciplinesError) {
-        console.error('Erro ao buscar disciplinas:', disciplinesError.message);
-        throw new InternalServerErrorException('Erro ao buscar disciplinas da turma');
-      }
-
-      // 3. Buscar alunos
-      const { data: students, error: studentsError } = await this.supabase
-        .from('class_users')
-        .select('user_email, users(name)')
-        .eq('class_id', class_id);
-
-      if (studentsError) {
-        console.error('Erro ao buscar alunos:', studentsError.message);
-        throw new InternalServerErrorException('Erro ao buscar alunos da turma');
-      }
-
-      return {
-        data: {
-          ...classData,
-          disciplines: disciplines.map((d) => ({
-            discipline_id: d.discipline_id,
-            name:
-              typeof d.disciplines === 'object' && 'name' in d.disciplines
-                ? d.disciplines.name
-                : null,
-            teacher_email: d.teacher_email,
-            teacher_name:
-              typeof d.users === 'object' && 'name' in d.users
-                ? d.users.name
-                : null,
-          })),
-          students: students.map((s) => ({
-            email: s.user_email,
-            name:
-              typeof s.users === 'object' && 'name' in s.users
-                ? s.users.name
-                : null,
-          })),
-        },
-      };
-
-
-    } catch (err) {
-      console.error('Erro no findClassById:', err.message);
-      throw err;
+    if (disciplinesError) {
+      console.error('Erro ao buscar disciplinas:', disciplinesError.message);
+      throw new InternalServerErrorException('Erro ao buscar disciplinas da turma');
     }
+
+    // 3. Buscar alunos
+    const { data: students, error: studentsError } = await this.supabase
+      .from('class_users')
+      .select('user_email, users(name)')
+      .eq('class_id', class_id);
+
+    if (studentsError) {
+      console.error('Erro ao buscar alunos:', studentsError.message);
+      throw new InternalServerErrorException('Erro ao buscar alunos da turma');
+    }
+
+    return {
+      data: {
+        ...classData,
+        disciplines: disciplines.map((d) => ({
+          class_discipline_id: d.class_discipline_id,
+          discipline_id: d.discipline_id,
+          name:
+            typeof d.disciplines === 'object' && 'name' in d.disciplines
+              ? d.disciplines.name
+              : null,
+          teacher_email: d.teacher_email,
+          teacher_name:
+            typeof d.users === 'object' && 'name' in d.users
+              ? d.users.name
+              : null,
+        })),
+        students: students.map((s) => ({
+          email: s.user_email,
+          name:
+            typeof s.users === 'object' && 'name' in s.users
+              ? s.users.name
+              : null,
+        })),
+      },
+    };
+
+  } catch (err) {
+    console.error('Erro no findClassById:', err.message);
+    throw err;
   }
+}
+
 
   // classes.service.ts
   async updateClass(class_id: string, body: UpdateClassDto) {

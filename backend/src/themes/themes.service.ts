@@ -39,6 +39,7 @@ export class ThemesService {
   }
 
   async createTheme(dto: CreateThemeDto) {
+    console.log('Criando tema:', dto);
     const { data, error } = await this.supabase
       .from('themes')
       .insert({
