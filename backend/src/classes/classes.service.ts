@@ -244,15 +244,45 @@ export class ClassesService {
     return { message: 'Turma atualizada com sucesso' };
   }
 
+  async delete(class_id: string) {
+    try {
+      // Remove vínculos com disciplinas
+      const { error: disciplineError } = await this.supabase
+        .from('class_disciplines')
+        .delete()
+        .eq('class_id', class_id);
 
-  // remove(id: string) {
-  //   const idx = this.classes.findIndex((c) => c.class_id === id);
-  //   if (idx >= 0) {
-  //     this.classes.splice(idx, 1);
-  //     return true;
-  //   }
-  //   return false;
-  // }
+      if (disciplineError) {
+        throw new InternalServerErrorException('Erro ao remover vínculos com disciplinas');
+      }
+
+      // Remove vínculos com alunos
+      const { error: studentsError } = await this.supabase
+        .from('class_users')
+        .delete()
+        .eq('class_id', class_id);
+
+      if (studentsError) {
+        throw new InternalServerErrorException('Erro ao remover vínculos com alunos');
+      }
+
+      // Remove a turma
+      const { error: classError } = await this.supabase
+        .from('classes')
+        .delete()
+        .eq('class_id', class_id);
+
+      if (classError) {
+        throw new InternalServerErrorException('Erro ao excluir a turma');
+      }
+
+      return { message: 'Turma excluída com sucesso' };
+    } catch (err) {
+      console.error('Erro ao deletar turma:', err.message);
+      throw err;
+    }
+  }
+
 
   // generateCode(id: string, expiresAt: Date) {
   //   const cls = this.classes.find((c) => c.class_id === id);

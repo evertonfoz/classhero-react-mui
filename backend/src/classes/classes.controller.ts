@@ -41,6 +41,12 @@ export class ClassesController {
     return this.classesService.updateClass(class_id, body);
   }
 
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return this.classesService.delete(id);
+  }
+
+
   // @Post(':id/generate-code')
   // async generate(
   //   @Param('id', ParseUUIDPipe) id: string,
@@ -48,12 +54,5 @@ export class ClassesController {
   // ): Promise<any> {
   //   const expires = new Date(Date.now() + (minutes || 60) * 60000);
   //   return await this.service.generateCode(id, expires);
-  // }
-
-
-
-  // @Delete(':id')
-  // async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-  //   return await this.service.remove(id);
   // }
 }

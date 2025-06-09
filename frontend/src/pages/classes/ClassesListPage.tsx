@@ -58,7 +58,6 @@ export default function ClassesListPage() {
 
   const { enqueueSnackbar } = useSnackbar();
   const selectedItem = items.find((c) => c.class_id === selectedId);
-
   const limit = useDynamicLimit();
 
   const openDeleteDialog = (id: string) => {
@@ -68,24 +67,33 @@ export default function ClassesListPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedId) return;
-    const token = localStorage.getItem('access_token');
+
+    setDeleting(true);
     try {
-      setDeleting(true);
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/classes/${selectedId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Erro ao excluir turma');
+
+      if (!response.ok) {
+        const { message } = await response.json();
+        enqueueSnackbar(message || 'Erro ao excluir a turma', { variant: 'error' });
+        return;
+      }
+
       enqueueSnackbar('Turma excluída com sucesso!', { variant: 'success' });
       fetchClasses();
-    } catch (error) {
-      enqueueSnackbar('Erro ao excluir turma.', { variant: 'error' });
+    } catch (err: any) {
+      enqueueSnackbar('Erro ao excluir a turma.', { variant: 'error' });
+      console.error(err);
     } finally {
       setDeleting(false);
       setDialogOpen(false);
       setSelectedId(null);
     }
   };
+
 
   const fetchClasses = async () => {
     const token = localStorage.getItem('access_token');
@@ -186,13 +194,15 @@ export default function ClassesListPage() {
         title={<><DeleteOutlineIcon color="error" /> Confirmar exclusão</>}
         message={
           <>
-            Tem certeza de que deseja <strong>excluir a turma "{selectedItem?.code}"</strong>?
+            Tem certeza de que deseja <strong>excluir a turma "{selectedItem?.code}"</strong>?<br />
+            <small>Todos os vínculos com disciplinas e estudantes serão removidos.</small>
           </>
         }
         confirmText={deleting ? 'Excluindo...' : 'Sim, excluir'}
         cancelText="Voltar"
         confirmColor="error"
       />
+
     </PageContainer>
   );
 }
