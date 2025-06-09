@@ -3,6 +3,7 @@ import {
     Button,
     Typography,
 } from '@mui/material';
+import PageContainer from '../../components/ui/PageContainer';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -121,18 +122,7 @@ export default function CourseFormPage() {
     };
 
     return (
-        <Box
-            sx={{
-                px: 4,
-                py: 4,
-                width: '100%',
-                boxSizing: 'border-box',
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-            }}
-        >
+        <PageContainer>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Novo Curso
             </Typography>
@@ -180,6 +170,6 @@ export default function CourseFormPage() {
             />
 
 
-        </Box>
+        </PageContainer>
     );
 }

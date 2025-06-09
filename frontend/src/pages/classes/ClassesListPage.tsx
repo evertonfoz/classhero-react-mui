@@ -10,13 +10,12 @@ import {
   Paper,
   Pagination,
   CircularProgress,
+  Fab,
   useMediaQuery,
   useTheme,
-  Fab,
-  TextField,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
+import ClassIcon from '@mui/icons-material/Class';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -25,30 +24,30 @@ import { useNavigate } from 'react-router-dom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
-import DisciplineRow from './components/listpage/DisciplineRow';
+import ClassRow from './components/listpage/ClassRow';
+import ClassFilter from './components/listpage/ClassFilter';
 import useDynamicLimit from '../../hooks/useDynamicLimit';
 
-interface Discipline {
-  discipline_id: string;
-  name: string;
-  syllabus: string;
-  workload_hours: number;
+interface ClassItem {
+  class_id: string;
+  code: string;
+  year: number;
+  semester: number;
 }
 
 interface ApiResponse {
-  data: Discipline[];
+  data: ClassItem[];
   totalPages: number;
 }
 
-export default function DisciplinesListPage() {
+export default function ClassesListPage() {
   const { logout } = useAuth();
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
 
-  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+  const [items, setItems] = useState<ClassItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -57,8 +56,8 @@ export default function DisciplinesListPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const selected = disciplines.find((d) => d.discipline_id === selectedId);
-
+  const { enqueueSnackbar } = useSnackbar();
+  const selectedItem = items.find((c) => c.class_id === selectedId);
   const limit = useDynamicLimit();
 
   const openDeleteDialog = (id: string) => {
@@ -66,50 +65,28 @@ export default function DisciplinesListPage() {
     setDialogOpen(true);
   };
 
-  const fetchDisciplines = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return logout();
-
-    setLoading(true);
-    try {
-      const query = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-      if (searchTerm) query.append('search', searchTerm);
-
-      const response = await fetch(`http://localhost:3000/disciplines/all?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Erro ao buscar disciplinas');
-
-      const { data, totalPages } = (await response.json()) as ApiResponse;
-      setDisciplines(data);
-      setTotalPages(totalPages);
-    } catch (error) {
-      enqueueSnackbar('Erro ao buscar disciplinas.', { variant: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleConfirmDelete = async () => {
     if (!selectedId) return;
 
-    const token = localStorage.getItem('access_token');
+    setDeleting(true);
     try {
-      setDeleting(true);
-      const response = await fetch(`http://localhost:3000/disciplines/${selectedId}`, {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:3000/classes/${selectedId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error();
 
-      enqueueSnackbar('Disciplina excluída com sucesso!', { variant: 'success' });
-      fetchDisciplines();
-    } catch (error) {
-      enqueueSnackbar('Erro ao excluir disciplina.', { variant: 'error' });
+      if (!response.ok) {
+        const { message } = await response.json();
+        enqueueSnackbar(message || 'Erro ao excluir a turma', { variant: 'error' });
+        return;
+      }
+
+      enqueueSnackbar('Turma excluída com sucesso!', { variant: 'success' });
+      fetchClasses();
+    } catch (err: any) {
+      enqueueSnackbar('Erro ao excluir a turma.', { variant: 'error' });
+      console.error(err);
     } finally {
       setDeleting(false);
       setDialogOpen(false);
@@ -117,34 +94,50 @@ export default function DisciplinesListPage() {
     }
   };
 
+
+  const fetchClasses = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return logout();
+    setLoading(true);
+    try {
+      const query = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+      });
+      if (searchTerm) query.append('search', searchTerm);
+      const response = await fetch(`http://localhost:3000/classes/all?${query.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Erro ao buscar turmas');
+      const { data, totalPages: pages } = (await response.json()) as ApiResponse;
+      setItems(data);
+      setTotalPages(pages);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchDisciplines();
+    fetchClasses();
   }, [currentPage, searchTerm, limit]);
 
   return (
-    <PageContainer
-      sx={{
-        maxWidth: `calc(100vw - ${isMobile ? 0 : sidebarWidth}px)`,
-      }}
-    >
+    <PageContainer sx={{ maxWidth: `calc(100vw - ${isMobile ? 0 : sidebarWidth}px)` }}>
       <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <MenuBookIcon />
+        <ClassIcon />
         <Typography variant="h5" fontWeight="bold">
-          Lista de Disciplinas
+          Lista de Turmas
         </Typography>
       </Box>
 
-      <TextField
-        fullWidth
-        placeholder="Pesquisar por nome..."
-        variant="outlined"
-        size="small"
-        value={searchTerm}
-        onChange={(e) => {
+      <ClassFilter
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
           setCurrentPage(1);
-          setSearchTerm(e.target.value);
+          setSearchTerm(value);
         }}
-        sx={{ mb: 3 }}
       />
 
       {loading ? (
@@ -157,20 +150,19 @@ export default function DisciplinesListPage() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ minWidth: isMobile ? 120 : 200 }}>Nome</TableCell>
-                  <TableCell sx={{ minWidth: isMobile ? 80 : 140 }}>Carga Horária</TableCell>
-                  <TableCell sx={{ minWidth: isMobile ? 100 : 160 }} align="center">Ações</TableCell>
+                  <TableCell>Código</TableCell>
+                  <TableCell>Ano</TableCell>
+                  <TableCell>Semestre</TableCell>
+                  <TableCell align="center">Ações</TableCell>
                 </TableRow>
               </TableHead>
-
               <TableBody>
-                {disciplines.map((discipline) => (
-                  <DisciplineRow
-                    key={discipline.discipline_id}
-                    discipline={discipline}
-                    onEdit={(id) => navigate(`/home/disciplinas/editar/${id}`)}
+                {items.map((item) => (
+                  <ClassRow
+                    key={item.class_id}
+                    item={item}
+                    onEdit={(id) => navigate(`/home/turmas/editar/${id}`)}
                     onDelete={openDeleteDialog}
-                    isMobile={isMobile}
                   />
                 ))}
               </TableBody>
@@ -189,13 +181,8 @@ export default function DisciplinesListPage() {
       <Fab
         color="primary"
         aria-label="add"
-        onClick={() => navigate('/home/disciplinas/nova')}
-        sx={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-          zIndex: 10,
-        }}
+        onClick={() => navigate('/home/turmas/nova')}
+        sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 10 }}
       >
         <AddIcon />
       </Fab>
@@ -204,21 +191,18 @@ export default function DisciplinesListPage() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleConfirmDelete}
-        title={
-          <>
-            <DeleteOutlineIcon color="error" />
-            Confirmar exclusão
-          </>
-        }
+        title={<><DeleteOutlineIcon color="error" /> Confirmar exclusão</>}
         message={
           <>
-            Tem certeza de que deseja excluir a disciplina <strong>"{selected?.name}"</strong>?
+            Tem certeza de que deseja <strong>excluir a turma "{selectedItem?.code}"</strong>?<br />
+            <small>Todos os vínculos com disciplinas e estudantes serão removidos.</small>
           </>
         }
         confirmText={deleting ? 'Excluindo...' : 'Sim, excluir'}
         cancelText="Voltar"
         confirmColor="error"
       />
+
     </PageContainer>
   );
 }
