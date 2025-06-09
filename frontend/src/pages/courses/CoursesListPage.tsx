@@ -37,7 +37,6 @@ interface Course {
 }
 
 export default function CoursesListPage() {
-export default function CoursesListPage() {
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
