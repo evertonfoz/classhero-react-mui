@@ -1,7 +1,6 @@
 import {
   Box,
   Typography,
-  TextField,
   Table,
   TableHead,
   TableRow,
@@ -17,12 +16,11 @@ import {
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
 import { useLayout } from '../../context/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import FilterBar from './components/FilterBar';
-import useDynamicLimit from '../../hooks/useDynamicLimit';
+import usePaginatedFetch from '../../hooks/usePaginatedFetch';
 
 interface AvatarData {
   avatar_url: string;
@@ -39,25 +37,14 @@ interface User {
   users_avatars?: AvatarData[];
 }
 
-interface ApiResponse {
-  data: User[];
-  totalUsers: number;
-  totalPages: number;
-  currentPage: number;
-}
 
 export default function UsersListPage() {
-  const { logout } = useAuth();
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
-  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     all: true,
     notValidated: false,
@@ -66,7 +53,30 @@ export default function UsersListPage() {
     is_a_student: false,
   });
 
-  const limit = useDynamicLimit();
+  const {
+    data: users,
+    loading,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    fetchData: fetchUsers,
+  } = usePaginatedFetch<User>(
+    (page, limit) => {
+      const query = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (searchTerm) query.append('search', searchTerm);
+      if (!filters.all) {
+        if (filters.notValidated) query.append('is_validated', 'false');
+        if (filters.is_a_admin) query.append('is_a_admin', 'true');
+        if (filters.is_a_teacher) query.append('is_a_teacher', 'true');
+        if (filters.is_a_student) query.append('is_a_student', 'true');
+      }
+      return `http://localhost:3000/users/all?${query.toString()}`;
+    },
+    [searchTerm, filters],
+  );
 
   const handleToggleFilter = (key: keyof typeof filters) => {
     if (key === 'all') {
@@ -87,45 +97,6 @@ export default function UsersListPage() {
     setCurrentPage(1);
   };
 
-  const fetchUsers = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return logout();
-
-    setLoading(true);
-    try {
-      const query = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-
-      if (searchTerm) query.append('search', searchTerm);
-
-      if (!filters.all) {
-        if (filters.notValidated) query.append('is_validated', 'false');
-        if (filters.is_a_admin) query.append('is_a_admin', 'true');
-        if (filters.is_a_teacher) query.append('is_a_teacher', 'true');
-        if (filters.is_a_student) query.append('is_a_student', 'true');
-      }
-
-      const response = await fetch(`http://localhost:3000/users/all?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Erro ao buscar usuários');
-
-      const { data, totalPages: pages } = (await response.json()) as ApiResponse;
-      setUsers(data);
-      setTotalPages(pages);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm, filters, limit]);
 
   return (
     <PageContainer

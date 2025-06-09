@@ -18,15 +18,14 @@ import {
 import PageContainer from '../../components/ui/PageContainer';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
 import { useLayout } from '../../context/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import DisciplineRow from './components/listpage/DisciplineRow';
-import useDynamicLimit from '../../hooks/useDynamicLimit';
+import usePaginatedFetch from '../../hooks/usePaginatedFetch';
 
 interface Discipline {
   discipline_id: string;
@@ -35,64 +34,44 @@ interface Discipline {
   workload_hours: number;
 }
 
-interface ApiResponse {
-  data: Discipline[];
-  totalPages: number;
-}
 
 export default function DisciplinesListPage() {
-  const { logout } = useAuth();
   const { sidebarWidth } = useLayout();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: disciplines,
+    loading,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    fetchData: fetchDisciplines,
+  } = usePaginatedFetch<Discipline>(
+    (page, limit) => {
+      const query = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (searchTerm) query.append('search', searchTerm);
+      return `http://localhost:3000/disciplines/all?${query.toString()}`;
+    },
+    [searchTerm],
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const selected = disciplines.find((d) => d.discipline_id === selectedId);
 
-  const limit = useDynamicLimit();
-
   const openDeleteDialog = (id: string) => {
     setSelectedId(id);
     setDialogOpen(true);
   };
 
-  const fetchDisciplines = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return logout();
-
-    setLoading(true);
-    try {
-      const query = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-      if (searchTerm) query.append('search', searchTerm);
-
-      const response = await fetch(`http://localhost:3000/disciplines/all?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Erro ao buscar disciplinas');
-
-      const { data, totalPages } = (await response.json()) as ApiResponse;
-      setDisciplines(data);
-      setTotalPages(totalPages);
-    } catch (error) {
-      enqueueSnackbar('Erro ao buscar disciplinas.', { variant: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleConfirmDelete = async () => {
     if (!selectedId) return;
@@ -117,9 +96,6 @@ export default function DisciplinesListPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDisciplines();
-  }, [currentPage, searchTerm, limit]);
 
   return (
     <PageContainer
