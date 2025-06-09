@@ -4,6 +4,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuid } from 'uuid';
 import { SearchClassesDto } from './dto/search-classes.dto';
 import { CreateClassDto } from './dto/create-class.dto';
+import { UpdateClassDto } from './dto/update-class-dto';
 
 @Injectable()
 export class ClassesService {
@@ -177,16 +178,72 @@ export class ClassesService {
     }
   }
 
+  // classes.service.ts
+  async updateClass(class_id: string, body: UpdateClassDto) {
+    // Atualiza os dados básicos da turma
+    const { error: updateError } = await this.supabase
+      .from('classes')
+      .update({
+        code: body.code,
+        year: body.year,
+        semester: body.semester,
+      })
+      .eq('class_id', class_id);
 
+    if (updateError) {
+      throw new InternalServerErrorException('Erro ao atualizar dados da turma');
+    }
 
-  // update(id: string, data: Omit<Class, 'class_id'>) {
-  //   const idx = this.classes.findIndex((c) => c.class_id === id);
-  //   if (idx >= 0) {
-  //     this.classes[idx] = { class_id: id, ...data };
-  //     return this.classes[idx];
-  //   }
-  //   return null;
-  // }
+    // 🔄 Atualiza disciplinas: remove todas e insere novamente
+    const { error: delDiscErr } = await this.supabase
+      .from('class_disciplines')
+      .delete()
+      .eq('class_id', class_id);
+
+    if (delDiscErr) {
+      throw new InternalServerErrorException('Erro ao limpar disciplinas da turma');
+    }
+
+    const disciplinePayload = body.disciplines.map((d) => ({
+      class_id,
+      discipline_id: d.discipline_id,
+      teacher_email: d.teacher_email,
+    }));
+
+    const { error: insertDiscErr } = await this.supabase
+      .from('class_disciplines')
+      .insert(disciplinePayload);
+
+    if (insertDiscErr) {
+      throw new InternalServerErrorException('Erro ao inserir disciplinas atualizadas');
+    }
+
+    // 🔄 Atualiza alunos: remove todos e insere novamente
+    const { error: delStuErr } = await this.supabase
+      .from('class_users')
+      .delete()
+      .eq('class_id', class_id);
+
+    if (delStuErr) {
+      throw new InternalServerErrorException('Erro ao limpar alunos da turma');
+    }
+
+    const studentPayload = body.student_emails.map((email) => ({
+      class_id,
+      user_email: email,
+    }));
+
+    const { error: insertStuErr } = await this.supabase
+      .from('class_users')
+      .insert(studentPayload);
+
+    if (insertStuErr) {
+      throw new InternalServerErrorException('Erro ao inserir alunos atualizados');
+    }
+
+    return { message: 'Turma atualizada com sucesso' };
+  }
+
 
   // remove(id: string) {
   //   const idx = this.classes.findIndex((c) => c.class_id === id);

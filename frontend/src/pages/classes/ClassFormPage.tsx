@@ -16,12 +16,19 @@ interface StudentOption {
   name: string;
 }
 
+interface TeacherOption {
+  email: string;
+  name: string;
+}
+
 export default function ClassFormPage() {
   const [code, setCode] = useState('');
   const [year, setYear] = useState<number | ''>('');
   const [semester, setSemester] = useState<number | ''>('');
   const [disciplines, setDisciplines] = useState<SelectedDiscipline[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
+  const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
+  const [studentOptions, setStudentOptions] = useState<StudentOption[]>([]);
   const [formModified, setFormModified] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -77,31 +84,38 @@ export default function ClassFormPage() {
           if (!response.ok) throw new Error();
           const { data } = await response.json();
 
+          const updatedTeachers: TeacherOption[] = [];
+          const parsedDisciplines = (data.disciplines || []).map((cd: any) => {
+            if (cd.teacher_email && cd.teacher_name) {
+              updatedTeachers.push({ email: cd.teacher_email, name: cd.teacher_name });
+            }
+            return {
+              discipline: { discipline_id: cd.discipline_id, name: cd.name },
+              teacher: cd.teacher_email ? { email: cd.teacher_email, name: cd.teacher_name } : null,
+            };
+          });
+
+          const updatedStudents: StudentOption[] = [];
+          const parsedStudents = (data.students || []).map((s: any) => {
+            if (s.email && s.name) {
+              updatedStudents.push({ email: s.email, name: s.name });
+            }
+            return { email: s.email, name: s.name };
+          });
+
           setCode(data.code);
           setYear(data.year);
           setSemester(data.semester);
-          setDisciplines(
-            (data.disciplines || []).map((cd: any) => ({
-              discipline: { discipline_id: cd.discipline_id, name: cd.name },
-              teacher: cd.teacher_email
-                ? { email: cd.teacher_email, name: cd.teacher_name }
-                : null,
-            }))
-          );
-          setStudents((data.students || []).map((s: any) => ({ email: s.email, name: s.name })));
+          setDisciplines(parsedDisciplines);
+          setStudents(parsedStudents);
+          setTeacherOptions(updatedTeachers);
+          setStudentOptions(updatedStudents);
 
           setOrigCode(data.code);
           setOrigYear(data.year);
           setOrigSemester(data.semester);
-          setOrigDisciplines(
-            (data.disciplines || []).map((cd: any) => ({
-              discipline: { discipline_id: cd.discipline_id, name: cd.name },
-              teacher: cd.teacher_email
-                ? { email: cd.teacher_email, name: cd.teacher_name }
-                : null,
-            }))
-          );
-          setOrigStudents((data.students || []).map((s: any) => ({ email: s.email, name: s.name })));
+          setOrigDisciplines(parsedDisciplines);
+          setOrigStudents(parsedStudents);
         } catch (err) {
           enqueueSnackbar('Erro ao carregar turma.', { variant: 'error' });
           navigate('/home/turmas');
@@ -164,6 +178,10 @@ export default function ClassFormPage() {
         setSemester={setSemester}
         setDisciplines={setDisciplines}
         setStudents={setStudents}
+        teacherOptions={teacherOptions}
+        setTeacherOptions={setTeacherOptions}
+        studentOptions={studentOptions}
+        setStudentOptions={setStudentOptions}
       />
 
       <Box display="flex" gap={2}>
@@ -181,7 +199,6 @@ export default function ClassFormPage() {
           }
           onClick={handleSubmit}
         >
-
           {isEditMode ? 'Salvar Alterações' : 'Cadastrar'}
         </Button>
       </Box>

@@ -11,6 +11,7 @@ import {
 import { ClassesService } from './classes.service';
 import { SearchClassesDto } from './dto/search-classes.dto';
 import { CreateClassDto } from './dto/create-class.dto';
+import { UpdateClassDto } from './dto/update-class-dto';
 
 @Controller('classes')
 export class ClassesController {
@@ -32,6 +33,14 @@ export class ClassesController {
     return await this.classesService.createClassWithLinks(body);
   }
 
+  @Put(':id')
+  async update(
+    @Param('id') class_id: string,
+    @Body() body: UpdateClassDto,
+  ) {
+    return this.classesService.updateClass(class_id, body);
+  }
+
   // @Post(':id/generate-code')
   // async generate(
   //   @Param('id', ParseUUIDPipe) id: string,
@@ -42,13 +51,6 @@ export class ClassesController {
   // }
 
 
-  // @Put(':id')
-  // async update(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @Body() body: UpdateClassDto,
-  // ): Promise<Class> {
-  //   return await this.service.update(id, body);
-  // }
 
   // @Delete(':id')
   // async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

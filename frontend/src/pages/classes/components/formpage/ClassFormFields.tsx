@@ -32,6 +32,10 @@ interface Props {
   setSemester: (v: number | '') => void;
   setDisciplines: (v: SelectedDiscipline[]) => void;
   setStudents: (v: StudentOption[]) => void;
+  teacherOptions: TeacherOption[];
+  setTeacherOptions: (v: TeacherOption[]) => void;
+  studentOptions: StudentOption[];
+  setStudentOptions: (v: StudentOption[]) => void;
 }
 
 export default function ClassFormFields({
@@ -45,12 +49,14 @@ export default function ClassFormFields({
   setSemester,
   setDisciplines,
   setStudents,
+  teacherOptions,
+  setTeacherOptions,
+  studentOptions,
+  setStudentOptions,
 }: Props) {
   const [disciplineOptions, setDisciplineOptions] = useState<DisciplineOption[]>([]);
   const [loadingDisciplines, setLoadingDisciplines] = useState(false);
-  const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
-  const [studentOptions, setStudentOptions] = useState<StudentOption[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchDis, setSearchDis] = useState('');
   const [searchStu, setSearchStu] = useState('');
@@ -180,26 +186,26 @@ export default function ClassFormFields({
         <FormControl fullWidth key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
           <InputLabel>Professor para {sd.discipline.name}</InputLabel>
           <Select
-  value={
-    teacherOptions.some((t) => t.email === sd.teacher?.email)
-      ? sd.teacher?.email
-      : ''
-  }
-  label={`Professor para ${sd.discipline.name}`}
-  onChange={(e) => {
-    const teacher = teacherOptions.find((t) => t.email === e.target.value);
-    handleTeacherSelect(i, teacher || null);
-  }}
->
-  <MenuItem value="">
-    <em>Nenhum</em>
-  </MenuItem>
-  {teacherOptions.map((t) => (
-    <MenuItem key={t.email} value={t.email}>
-      {t.name}
-    </MenuItem>
-  ))}
-</Select>
+            value={
+              teacherOptions.some((t) => t.email === sd.teacher?.email)
+                ? sd.teacher?.email
+                : ''
+            }
+            label={`Professor para ${sd.discipline.name}`}
+            onChange={(e) => {
+              const teacher = teacherOptions.find((t) => t.email === e.target.value);
+              handleTeacherSelect(i, teacher || null);
+            }}
+          >
+            <MenuItem value="">
+              <em>Nenhum</em>
+            </MenuItem>
+            {teacherOptions.map((t) => (
+              <MenuItem key={t.email} value={t.email}>
+                {t.name}
+              </MenuItem>
+            ))}
+          </Select>
 
         </FormControl>
       ))}
