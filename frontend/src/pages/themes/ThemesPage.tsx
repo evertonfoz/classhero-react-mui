@@ -7,19 +7,18 @@ import {
   ListItemText,
   Divider,
   Stack,
+  Collapse,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
   Button,
-  useTheme,
+  Snackbar,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Edit, Delete, ArrowBack, Add } from '@mui/icons-material';
-import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
-import { enqueueSnackbar } from 'notistack';
+import { Edit, Delete, ArrowBack, Add, ExpandMore, ExpandLess } from '@mui/icons-material';
 
 interface Theme {
   id: string;
@@ -27,136 +26,122 @@ interface Theme {
   description: string;
 }
 
+interface Material {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+}
+
 export default function ThemesPage() {
   const { classId, classDisciplineId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
   const { disciplineName, teacherName, classCode } = location.state || {};
 
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [expandedThemeId, setExpandedThemeId] = useState<string | null>(null);
+  const [materialsMap, setMaterialsMap] = useState<Record<string, Material[]>>({});
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [snack, setSnack] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  useEffect(() => {
-    const fetchThemes = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(
-          `http://localhost:3000/themes/by-class-discipline/${classDisciplineId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const { data } = await res.json();
+  const fetchThemes = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:3000/themes/by-class-discipline/${classDisciplineId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { data } = await res.json();
 
-        setThemes((data || []).map((t: any) => ({
+      setThemes(
+        (data || []).map((t: any) => ({
           id: t.theme_id || t.id,
           title: t.title,
-          description: t.description
-        })));
-      } catch (err) {
-        console.error('Erro ao carregar temas:', err);
-      }
-    };
+          description: t.description,
+        }))
+      );
+    } catch (err) {
+      console.error('Erro ao carregar temas:', err);
+    }
+  };
 
+  const fetchMaterials = async (themeId: string) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:3000/materials/by-theme/${themeId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { data } = await res.json();
+      setMaterialsMap((prev) => ({ ...prev, [themeId]: data || [] }));
+    } catch (err) {
+      console.error('Erro ao buscar materiais:', err);
+    }
+  };
+
+  useEffect(() => {
     if (classDisciplineId) fetchThemes();
   }, [classDisciplineId]);
 
-  const handleOpenCreateDialog = () => {
-    setEditingTheme(null);
-    setNewTitle('');
-    setNewDescription('');
-    setOpenDialog(true);
-  };
-
-  const handleOpenEditDialog = (theme: Theme) => {
-    setEditingTheme(theme);
-    setNewTitle(theme.title);
-    setNewDescription(theme.description);
-    setOpenDialog(true);
-  };
-
-  const handleSaveTheme = async () => {
-    const token = localStorage.getItem('access_token');
-    const body = {
-      title: newTitle,
-      description: newDescription,
-      class_discipline_id: classDisciplineId
-    };
-
-    console.log('editingTheme:', editingTheme);
-    try {
-      const res = await fetch(
-        editingTheme
-          ? `http://localhost:3000/themes/${editingTheme.id}`
-          : 'http://localhost:3000/themes',
-        {
-          method: editingTheme ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(body)
-        }
-      );
-      const { data } = await res.json();
-
-      if (res.ok) {
-        if (editingTheme) {
-          setThemes((prev) =>
-            prev.map((t) => (t.id === editingTheme.id ? { ...t, ...body } : t))
-          );
-        } else {
-            
-          setThemes((prev) => [...prev, {
-            id: data.theme_id || data.id,
-            title: data.title,
-            description: data.description
-          }]);
-        }
-        setOpenDialog(false);
-        enqueueSnackbar(editingTheme ? 'Tema atualizado com sucesso!' : 'Tema criado com sucesso!', { variant: 'success' });
-
-        setEditingTheme(null);
-        setNewTitle('');
-        setNewDescription('');
-      } else {
-        enqueueSnackbar('Erro ao salvar o tema.', { variant: 'error' });
-
-        console.error('Erro ao salvar tema:', data);
-      }
-    } catch (err) {
-      console.error('Erro ao salvar tema:', err);
+  const handleExpand = (themeId: string) => {
+    if (expandedThemeId === themeId) {
+      setExpandedThemeId(null);
+    } else {
+      setExpandedThemeId(themeId);
+      if (!materialsMap[themeId]) fetchMaterials(themeId);
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!confirmDeleteId) return;
+  const handleDelete = async (id: string) => {
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch(`http://localhost:3000/themes/${confirmDeleteId}`, {
+      await fetch(`http://localhost:3000/themes/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        setThemes((prev) => prev.filter((t) => t.id !== confirmDeleteId));
-        enqueueSnackbar('Tema excluído com sucesso!', { variant: 'success' });
-
-      } else {
-        enqueueSnackbar('Erro ao excluir tema.', { variant: 'error' });
-
-        console.error('Erro ao excluir tema.');
-      }
+      setThemes((prev) => prev.filter((t) => t.id !== id));
+      setSnack({ open: true, message: 'Tema excluído com sucesso.', severity: 'success' });
     } catch (err) {
       console.error('Erro ao excluir tema:', err);
-    } finally {
-      setConfirmDeleteId(null);
+      setSnack({ open: true, message: 'Erro ao excluir tema.', severity: 'error' });
     }
   };
 
-  const hasChanges = newTitle !== (editingTheme?.title || '') || newDescription !== (editingTheme?.description || '');
+  const handleCreateTheme = async () => {
+    const token = localStorage.getItem('access_token');
+    try {
+      const res = await fetch('http://localhost:3000/themes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDescription,
+          class_discipline_id: classDisciplineId,
+        }),
+      });
+
+      const { data } = await res.json();
+      if (res.ok) {
+        setThemes((prev) => [...prev, { id: data.theme_id, title: data.title, description: data.description }]);
+        setOpenDialog(false);
+        setNewTitle('');
+        setNewDescription('');
+        setSnack({ open: true, message: 'Tema criado com sucesso.', severity: 'success' });
+      } else {
+        setSnack({ open: true, message: 'Erro ao criar tema.', severity: 'error' });
+      }
+    } catch (err) {
+      setSnack({ open: true, message: 'Erro ao criar tema.', severity: 'error' });
+    }
+  };
 
   return (
     <Box p={3} width="100%">
@@ -169,51 +154,52 @@ export default function ThemesPage() {
       <Divider sx={{ mb: 2 }} />
 
       <List>
-        {themes.map((t, index) => (
-          <ListItem
-  key={t.id}
-  divider
-  secondaryAction={
-    <>
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          handleOpenEditDialog(t);
-        }}
-      >
-        <Edit />
-      </IconButton>
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          setConfirmDeleteId(t.id);
-        }}
-        color="error"
-      >
-        <Delete />
-      </IconButton>
-    </>
-  }
-  sx={{ backgroundColor: index % 2 === 0 ? theme.palette.action.hover : 'inherit' }}
->
-  <Box onClick={() => handleOpenEditDialog(t)} sx={{ width: '100%', cursor: 'pointer' }}>
-    <ListItemText
-      primary={<Typography variant="h6" fontWeight="bold">{t.title}</Typography>}
-      secondary={t.description}
-    />
-  </Box>
-</ListItem>
+        {themes.map((t) => (
+          <Box key={t.id}>
+            <ListItem
+              divider
+              sx={{ cursor: 'pointer' }}
+              onClick={() => handleExpand(t.id)}
+              secondaryAction={
+                <>
+                  <IconButton onClick={(e) => { e.stopPropagation(); /* editar */ }}><Edit /></IconButton>
+                  <IconButton onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }} color="error">
+                    <Delete />
+                  </IconButton>
+                  <IconButton onClick={(e) => { e.stopPropagation(); handleExpand(t.id); }}>
+                    {expandedThemeId === t.id ? <ExpandLess /> : <ExpandMore />}
+                  </IconButton>
+                </>
+              }
+            >
+              <ListItemText
+                primary={<Typography variant="h6" fontWeight="bold">{t.title}</Typography>}
+                secondary={t.description}
+              />
+            </ListItem>
 
+            <Collapse in={expandedThemeId === t.id} timeout="auto" unmountOnExit>
+              <Box px={4} py={2} bgcolor="#f9f9f9">
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  Materiais:
+                </Typography>
+                {materialsMap[t.id]?.length ? (
+                  materialsMap[t.id].map((m) => (
+                    <Typography key={m.id} variant="body2" gutterBottom>
+                      - [{m.type.toUpperCase()}] <a href={m.url} target="_blank" rel="noreferrer">{m.name}</a>
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum material disponível.
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+          </Box>
         ))}
-
-        {themes.length === 0 && (
-          <Typography variant="body2" color="text.secondary" mt={2}>
-            Nenhum tema registrado ainda.
-          </Typography>
-        )}
       </List>
 
-      {/* FABs */}
       <Box
         sx={{
           position: 'fixed',
@@ -239,7 +225,7 @@ export default function ThemesPage() {
         </IconButton>
 
         <IconButton
-          onClick={handleOpenCreateDialog}
+          onClick={() => setOpenDialog(true)}
           sx={{
             bgcolor: 'primary.main',
             color: 'white',
@@ -253,54 +239,34 @@ export default function ThemesPage() {
         </IconButton>
       </Box>
 
-      {/* Dialog de novo/edição de tema */}
-      <Dialog
-        open={openDialog}
-        onClose={(_, reason) => {
-          if (reason !== 'backdropClick') setOpenDialog(false);
-        }}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>{editingTheme ? 'Editar Tema' : 'Novo Tema'}</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-  <Box mt={1}>
-    <TextField
-      label="Título"
-      value={newTitle}
-      onChange={(e) => setNewTitle(e.target.value)}
-      fullWidth
-      autoFocus
-      InputLabelProps={{ shrink: true }}
-    />
-  </Box>
-  <TextField
-    label="Descrição"
-    value={newDescription}
-    onChange={(e) => setNewDescription(e.target.value)}
-    multiline
-    rows={4}
-    fullWidth
-    InputLabelProps={{ shrink: true }}
-  />
-</DialogContent>
-
+      <Dialog open={openDialog} onClose={() => {}} fullWidth maxWidth="sm">
+        <DialogTitle>Novo Tema</DialogTitle>
+        <DialogContent sx={{ mt: 1 }}>
+          <Box pt={1}>
+            <TextField
+              label="Título"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              fullWidth
+              autoFocus
+              margin="normal"
+            />
+            <TextField
+              label="Descrição"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              multiline
+              rows={4}
+              fullWidth
+              margin="normal"
+            />
+          </Box>
+        </DialogContent>
         <DialogActions>
-          {hasChanges ? (
+          {newTitle || newDescription ? (
             <>
-              <Button
-                onClick={() => {
-                  setNewTitle(editingTheme?.title || '');
-                  setNewDescription(editingTheme?.description || '');
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleSaveTheme}
-                variant="contained"
-                disabled={!newTitle.trim() || !newDescription.trim()}
-              >
+              <Button onClick={() => { setNewTitle(''); setNewDescription(''); }}>Cancelar</Button>
+              <Button onClick={handleCreateTheme} disabled={!newTitle.trim() || !newDescription.trim()} variant="contained">
                 Salvar
               </Button>
             </>
@@ -310,18 +276,11 @@ export default function ThemesPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog de confirmação de exclusão */}
-      <ConfirmationDialog
-        open={!!confirmDeleteId}
-        onClose={() => setConfirmDeleteId(null)}
-        onConfirm={handleConfirmDelete}
-        title={<><Delete color="error" /> Confirmar exclusão</>}
-        message={<>
-          Tem certeza de que deseja excluir o tema <strong>{themes.find(t => t.id === confirmDeleteId)?.title}</strong>?
-        </>}
-        confirmText="Sim, excluir"
-        cancelText="Voltar"
-        confirmColor="error"
+      <Snackbar
+        open={snack.open}
+        onClose={() => setSnack({ ...snack, open: false })}
+        autoHideDuration={4000}
+        message={snack.message}
       />
     </Box>
   );
