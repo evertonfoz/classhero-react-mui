@@ -1,14 +1,16 @@
 import {
   Box,
   Button,
+  IconButton,
   Typography,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import SuccessDialog from '../../components/ui/SuccessDialog';
 import DisciplineFormFields from './components/formpage/DisciplineFormFields';
+import { ArrowBack } from '@mui/icons-material';
 
 interface Course {
   course_id: string;
@@ -32,6 +34,15 @@ export default function DisciplinesFormPage() {
   const [originalEmenta, setOriginalEmenta] = useState('');
   const [originalCargaHoraria, setOriginalCargaHoraria] = useState<number | ''>('');
   const [originalCourses, setOriginalCourses] = useState<Course[]>([]);
+
+  const nomeInputRef = useRef<HTMLInputElement>(null);
+
+
+  useEffect(() => {
+        if (nomeInputRef.current) {
+            nomeInputRef.current.focus();
+        }
+    }, []);
 
   useEffect(() => {
     const modificado =
@@ -57,6 +68,10 @@ export default function DisciplinesFormPage() {
       setSelectedCourses([]);
     }
     setFormModified(false);
+
+    setTimeout(() => {
+            nomeInputRef.current?.focus();
+        }, 100);
   };
 
   useEffect(() => {
@@ -140,6 +155,7 @@ export default function DisciplinesFormPage() {
         {isEditMode ? 'Editar Disciplina' : 'Nova Disciplina'}
       </Typography>
 
+            <br />
       <DisciplineFormFields
         nome={nome}
         ementa={ementa}
@@ -149,6 +165,7 @@ export default function DisciplinesFormPage() {
         setCargaHoraria={setCargaHoraria}
         selectedCourses={selectedCourses}
         setSelectedCourses={setSelectedCourses}
+                nomeInputRef={nomeInputRef}
       />
 
 
@@ -165,6 +182,28 @@ export default function DisciplinesFormPage() {
         </Button>
       </Box>
 
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 32, // acima do botão de adicionar
+                    right: 24,
+                    zIndex: 1000,
+                }}
+            >
+                <IconButton
+                    onClick={() => navigate('/home/disciplinas')}
+                    sx={{
+                        bgcolor: '#e0e0e0',
+                        '&:hover': { bgcolor: '#d5d5d5' },
+                        width: 56,
+                        height: 56,
+                        boxShadow: 3,
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+            </Box>
+
       <SuccessDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
@@ -174,6 +213,9 @@ export default function DisciplinesFormPage() {
         onAgain={() => {
           handleReset();
           setDialogOpen(false);
+                    setTimeout(() => {
+                        nomeInputRef.current?.focus();
+                    }, 100);
         }}
       />
     </PageContainer>

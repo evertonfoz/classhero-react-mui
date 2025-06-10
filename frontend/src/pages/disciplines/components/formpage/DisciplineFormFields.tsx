@@ -20,6 +20,8 @@ interface Props {
   setEmenta: (value: string) => void;
   setCargaHoraria: (value: number | '') => void;
   setSelectedCourses: (value: Course[]) => void;
+  nomeInputRef?: React.RefObject<HTMLInputElement | null>;
+
 }
 
 export default function DisciplineFormFields({
@@ -31,6 +33,7 @@ export default function DisciplineFormFields({
   setEmenta,
   setCargaHoraria,
   setSelectedCourses,
+  nomeInputRef ,
 }: Props) {
   const [courseOptions, setCourseOptions] = useState<Course[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
@@ -63,6 +66,7 @@ export default function DisciplineFormFields({
         value={nome}
         onChange={(e) => setNome(e.target.value)}
         fullWidth
+        inputRef={nomeInputRef}
       />
       <TextField
         label="Ementa (opcional)"

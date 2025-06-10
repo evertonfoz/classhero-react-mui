@@ -76,7 +76,11 @@ export default function DisciplinesListPage() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const { message } = await response.json();
+        enqueueSnackbar(message || 'Erro ao excluir curso.', { variant: 'error' });
+        return;
+      }
 
       enqueueSnackbar('Disciplina excluída com sucesso!', { variant: 'success' });
       fetchDisciplines();

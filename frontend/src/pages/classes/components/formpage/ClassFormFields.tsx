@@ -48,6 +48,7 @@ interface Props {
   setTeacherOptions: (v: TeacherOption[]) => void;
   studentOptions: StudentOption[];
   setStudentOptions: (v: StudentOption[]) => void;
+  nomeInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export default function ClassFormFields({
@@ -65,6 +66,7 @@ export default function ClassFormFields({
   setTeacherOptions,
   studentOptions,
   setStudentOptions,
+  nomeInputRef ,
 }: Props) {
   const [disciplineOptions, setDisciplineOptions] = useState<DisciplineOption[]>([]);
   const [loadingDisciplines, setLoadingDisciplines] = useState(false);
@@ -158,6 +160,7 @@ export default function ClassFormFields({
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           fullWidth
+        inputRef={nomeInputRef}
           inputProps={{ style: { textTransform: 'uppercase' } }}
         />
 

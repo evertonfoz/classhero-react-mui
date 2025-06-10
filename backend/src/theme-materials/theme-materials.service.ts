@@ -29,18 +29,18 @@ export class ThemeMaterialsService {
       const { error: uploadError } = await this.supabase.storage
         .from(bucket)
         .upload(`materials/pdfs/${filename}`, file.buffer, {
-                    contentType: file.mimetype,
-                    upsert: false,
-                });
+          contentType: file.mimetype,
+          upsert: false,
+        });
 
-      if (uploadError){ 
+      if (uploadError) {
         console.error('Erro no upload:', uploadError.message);
         throw new InternalServerErrorException('Erro ao subir PDF');
       }
 
-       const { data: publicUrlData } = this.supabase.storage
-                .from(bucket)
-                .getPublicUrl(`materials/pdfs/${filename}`);
+      const { data: publicUrlData } = this.supabase.storage
+        .from(bucket)
+        .getPublicUrl(`materials/pdfs/${filename}`);
 
       finalUrl = publicUrlData;
 
@@ -69,8 +69,6 @@ export class ThemeMaterialsService {
       .eq('theme_id', theme_id)
       .order('created_at', { ascending: false });
 
-    console.log('Dados dos materiais:', data);
-
     if (error) throw new Error('Erro ao buscar materiais');
     return data;
   }
@@ -88,13 +86,47 @@ export class ThemeMaterialsService {
   }
 
   async remove(id: string) {
-    const { error } = await this.supabase
+    // 1. Buscar material antes de excluir
+    const { data: material, error: fetchError } = await this.supabase
+      .from('theme_materials')
+      .select('content')
+      .eq('material_id', id)
+      .single();
+
+    if (fetchError || !material) {
+      throw new NotFoundException('Material não encontrado');
+    }
+
+    // 2. Extrair o path do arquivo (ex: "materials/pdfs/arquivo.pdf")
+    let filePath = '';
+    try {
+      const content = JSON.parse(material.content);
+      filePath = new URL(content.publicUrl).pathname.replace(/^\/storage\/v1\/object\/public\/classhero_bucket\//, '');
+    } catch (e) {
+      console.warn('Erro ao extrair path do conteúdo', e);
+    }
+
+    // 3. Remover do banco de dados
+    const { error: deleteError } = await this.supabase
       .from('theme_materials')
       .delete()
       .eq('material_id', id);
 
-    if (error) throw new NotFoundException('Erro ao excluir material');
+    if (deleteError) throw new NotFoundException('Erro ao excluir material');
+
+    // 4. Remover do bucket (caso tenha path válido)
+    if (filePath) {
+      const { error: storageError } = await this.supabase.storage
+        .from('classhero_bucket')
+        .remove([filePath]);
+
+      if (storageError) {
+        console.warn('Arquivo removido do banco mas não do storage:', storageError.message);
+      }
+    }
+
     return { message: 'Material excluído com sucesso' };
   }
+
 }
 

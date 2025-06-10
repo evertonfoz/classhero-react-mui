@@ -117,36 +117,35 @@ export class CoursesService {
 
 
   async deleteCourse(course_id: string) {
-  // Verifica se o curso está vinculado a alguma disciplina
-  const { count, error: countError } = await this.supabase
-    .from('courses_disciplines')
-    .select('course_id', { count: 'exact', head: true })
-    .eq('course_id', course_id);
+    // Verifica se o curso está vinculado a alguma disciplina
+    const { count, error: countError } = await this.supabase
+      .from('courses_disciplines')
+      .select('course_id', { count: 'exact', head: true })
+      .eq('course_id', course_id);
 
-  if (countError) {
-    console.error('Erro ao verificar vínculos do curso:', countError.message);
-    throw new InternalServerErrorException('Erro ao verificar vínculos do curso.');
+    if (countError) {
+      console.error('Erro ao verificar vínculos do curso:', countError.message);
+      throw new InternalServerErrorException('Erro ao verificar vínculos do curso.');
+    }
+
+    // 🚫 Impede exclusão se houver vínculo
+    if (typeof count === 'number' && count > 0) {
+      throw new BadRequestException('Este curso está vinculado a uma ou mais disciplinas e não pode ser excluído.');
+    }
+
+    // ✅ Executa a exclusão
+    const { error } = await this.supabase
+      .from('courses')
+      .delete()
+      .eq('course_id', course_id);
+
+    if (error) {
+      console.error('Erro ao excluir o curso:', error.message);
+      throw new InternalServerErrorException('Erro ao excluir o curso.');
+    }
+
+    return { message: 'Curso excluído com sucesso.' };
   }
-
-  // 🚫 Impede exclusão se houver vínculo
-  if (typeof count === 'number' && count > 0) {
-    throw new BadRequestException('Este curso está vinculado a uma ou mais disciplinas e não pode ser excluído.');
-  }
-
-  // ✅ Executa a exclusão
-  const { error } = await this.supabase
-    .from('courses')
-    .delete()
-    .eq('course_id', course_id);
-
-  if (error) {
-    console.error('Erro ao excluir o curso:', error.message);
-    throw new InternalServerErrorException('Erro ao excluir o curso.');
-  }
-
-  return { message: 'Curso excluído com sucesso.' };
-}
-
 
 
   async findById(courseId: string) {

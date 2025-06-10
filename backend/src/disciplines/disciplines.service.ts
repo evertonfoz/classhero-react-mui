@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { SearchDisciplinesDto } from './dto/search-disciplines.dto';
 import { ConfigService } from '@nestjs/config';
@@ -192,16 +192,49 @@ export class DisciplinesService {
         }
     }
 
+    async remove(discipline_id: string) {
+        // 🔍 Verifica se a disciplina está vinculada a algum curso
+        const { count: countCourses, error: errorCourses } = await this.supabase
+            .from('courses_disciplines')
+            .select('discipline_id', { count: 'exact', head: true })
+            .eq('discipline_id', discipline_id);
 
+        if (errorCourses) {
+            console.error('Erro ao verificar vínculos com cursos:', errorCourses.message);
+            throw new InternalServerErrorException('Erro ao verificar vínculos da disciplina.');
+        }
 
-    async remove(id: string) {
+        if (typeof countCourses === 'number' && countCourses > 0) {
+            throw new BadRequestException('Esta disciplina está vinculada a um ou mais cursos e não pode ser excluída.');
+        }
+
+        // 🔍 Verifica se a disciplina está vinculada a alguma turma (se aplicável)
+        const { count: countTurmas, error: errorTurmas } = await this.supabase
+            .from('class_disciplines')
+            .select('discipline_id', { count: 'exact', head: true })
+            .eq('discipline_id', discipline_id);
+
+        if (errorTurmas) {
+            console.error('Erro ao verificar vínculos com turmas:', errorTurmas.message);
+            throw new InternalServerErrorException('Erro ao verificar vínculos da disciplina.');
+        }
+
+        if (typeof countTurmas === 'number' && countTurmas > 0) {
+            throw new BadRequestException('Esta disciplina está vinculada a uma ou mais turmas e não pode ser excluída.');
+        }
+
+        // ✅ Exclusão
         const { error } = await this.supabase
             .from('disciplines')
             .delete()
-            .eq('discipline_id', id);
+            .eq('discipline_id', discipline_id);
 
-        if (error) throw new Error(error.message);
+        if (error) {
+            console.error('Erro ao excluir disciplina:', error.message);
+            throw new InternalServerErrorException('Erro ao excluir a disciplina.');
+        }
 
-        return { message: 'Disciplina removida com sucesso' };
+        return { message: 'Disciplina removida com sucesso.' };
     }
+
 }

@@ -42,6 +42,12 @@ export default function ThemesPage() {
   const [newDescription, setNewDescription] = useState('');
   const [openMaterialDialogFor, setOpenMaterialDialogFor] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<Partial<Material> & { file?: File }>({});
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
+  const [confirmDeleteThemeOpen, setConfirmDeleteThemeOpen] = useState(false);
+
 
   const fetchThemes = async () => {
     try {
@@ -60,6 +66,33 @@ export default function ThemesPage() {
       console.error('Erro ao carregar temas:', err);
     }
   };
+
+
+  const confirmDeleteTheme = async () => {
+    if (!themeToDelete) return;
+
+    const token = localStorage.getItem('access_token');
+    try {
+      await fetch(`http://localhost:3000/themes/${themeToDelete}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setThemes((prev) => prev.filter((t) => t.id !== themeToDelete));
+      enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
+    } catch (err) {
+      console.error('Erro ao excluir tema:', err);
+      enqueueSnackbar('Erro ao excluir tema.', { variant: 'error' });
+    } finally {
+      setConfirmDeleteThemeOpen(false);
+      setThemeToDelete(null);
+    }
+  };
+
+  const onDeleteThemeClick = (themeId: string) => {
+    setThemeToDelete(themeId);
+    setConfirmDeleteThemeOpen(true);
+  };
+
 
   const fetchMaterials = async (themeId: string) => {
     try {
@@ -81,7 +114,7 @@ export default function ThemesPage() {
         }
 
         return {
-          id: m.material_id,
+          material_id: m.material_id,
           name: m.title,
           description: m.description,
           type: m.type,
@@ -101,9 +134,8 @@ export default function ThemesPage() {
     setNewMaterial(material); // pré-carrega os campos no dialog
   };
 
-  const handleDeleteMaterial = async (materialId: string) => {
-    const confirm = window.confirm('Deseja realmente excluir este material?');
-    if (!confirm) return;
+  const confirmDeleteMaterial = async (materialId: string) => {
+    if (!materialId) return;
 
     const token = localStorage.getItem('access_token');
     try {
@@ -118,8 +150,11 @@ export default function ThemesPage() {
     } catch (err) {
       console.error('Erro ao excluir material:', err);
       enqueueSnackbar('Erro ao excluir material.', { variant: 'error' });
+    } finally {
+      setConfirmDialogOpen(false);
     }
   };
+
 
   useEffect(() => {
     if (classDisciplineId) fetchThemes();
@@ -214,10 +249,15 @@ export default function ThemesPage() {
     }
   };
 
+  const handleDeleteMaterialClick = (materialId: string) => {
+    setMaterialToDelete(materialId);
+    setConfirmDialogOpen(true);
+  };
+
   return (
     <Box p={3} width="100%">
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">
+        <Typography variant="h4">
           Temas para a disciplina <strong>{disciplineName}</strong> do professor <strong>{teacherName}</strong> para a turma <strong>{classCode}</strong>
         </Typography>
       </Stack>
@@ -233,16 +273,27 @@ export default function ThemesPage() {
             expanded={expandedThemeId === t.id}
             materials={materialsMap[t.id] || []}
             onExpand={handleExpand}
-            onDelete={handleDelete}
             onOpenMaterialDialog={setOpenMaterialDialogFor}
             zebraIndex={index}
             onEditMaterial={handleEditMaterial}
-            onDeleteMaterial={handleDeleteMaterial}
-
+            handleDeleteMaterialClick={handleDeleteMaterialClick}
+            onDeleteThemeClick={onDeleteThemeClick}
 
           />
         ))}
       </List>
+
+      {themes.length === 0 && (
+  <Typography
+    variant="body1"
+    color="text.secondary"
+    textAlign="center"
+    mt={0}
+  >
+    Nenhum tema cadastrado ainda. Clique no botão <strong>+</strong> para adicionar o primeiro tema.
+  </Typography>
+)}
+
 
       <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1000 }}>
         <IconButton onClick={() => navigate(`/home/turmas/editar/${classId}`)} sx={{ bgcolor: '#e0e0e0', '&:hover': { bgcolor: '#d5d5d5' }, width: 56, height: 56, boxShadow: 3 }}>
@@ -274,6 +325,24 @@ export default function ThemesPage() {
         </DialogActions>
       </Dialog>
 
+      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+        <DialogTitle>Confirmar exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>Deseja realmente excluir este material?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
+          <Button
+            onClick={() => materialToDelete && confirmDeleteMaterial(materialToDelete)}
+            color="error"
+            variant="contained"
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
       <MaterialFormDialog
         open={!!openMaterialDialogFor}
         onClose={() => setOpenMaterialDialogFor(null)}
@@ -283,6 +352,20 @@ export default function ThemesPage() {
           setOpenMaterialDialogFor(null);
         }}
       />
+
+      <Dialog open={confirmDeleteThemeOpen} onClose={() => setConfirmDeleteThemeOpen(false)}>
+        <DialogTitle>Confirmar exclusão do tema</DialogTitle>
+        <DialogContent>
+          <Typography>Tem certeza que deseja excluir este tema?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteThemeOpen(false)}>Cancelar</Button>
+          <Button onClick={confirmDeleteTheme} color="error" variant="contained">
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 }

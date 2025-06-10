@@ -12,42 +12,53 @@ interface ThemeItemProps {
   expanded: boolean;
   materials: Material[];
   onExpand: (themeId: string) => void;
-  onDelete: (themeId: string) => void;
+  onDeleteThemeClick: (themeId: string) => void;
+
   onOpenMaterialDialog: (themeId: string) => void;
   zebraIndex: number;
   onEditMaterial: (material: Material) => void;
-  onDeleteMaterial: (materialId: string) => void;
+  handleDeleteMaterialClick: (materialId: string) => void;
 
 }
 
 export default function ThemeItem({
   themeId, title, description, expanded, zebraIndex,
-  materials, onExpand, onDelete, onOpenMaterialDialog, onDeleteMaterial, onEditMaterial
+  materials, onExpand, onDeleteThemeClick, onOpenMaterialDialog, handleDeleteMaterialClick, onEditMaterial
 }: ThemeItemProps) {
   return (
     <Box key={themeId} bgcolor={zebraIndex % 2 === 0 ? '#fafafa' : '#ffffff'}>
 
       <ListItem
-        divider
-        sx={{ cursor: 'pointer' }}
-        onClick={() => onExpand(themeId)}
-        secondaryAction={
-          <>
-            <IconButton onClick={(e) => { e.stopPropagation(); }}><Edit /></IconButton>
-            <IconButton onClick={(e) => { e.stopPropagation(); onDelete(themeId); }} color="error">
-              <Delete />
-            </IconButton>
-            <IconButton onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
-              {expanded ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </>
-        }
-      >
-        <ListItemText
-          primary={<Typography variant="h6" fontWeight="bold">{title}</Typography>}
-          secondary={description}
-        />
-      </ListItem>
+  alignItems="flex-start" // <- garante alinhamento ao topo
+  divider
+  sx={{ cursor: 'pointer' }}
+  onClick={() => onExpand(themeId)}
+  secondaryAction={
+    <Box
+      display="flex"
+      flexDirection="row"
+      alignItems="flex-start"  // <- alinha os ícones no topo
+      sx={{ mt: '4px' }}        // <- leve ajuste para alinhar melhor visualmente
+    >
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditMaterial({ material_id: themeId } as any); }}>
+        <Edit fontSize="small" />
+      </IconButton>
+      <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
+        <Delete fontSize="small" />
+      </IconButton>
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
+        {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+      </IconButton>
+    </Box>
+  }
+>
+  <ListItemText
+    primary={<Typography variant="h6" fontWeight="bold">{title}</Typography>}
+    secondary={description}
+    sx={{ pr: 8 }}
+  />
+</ListItem>
+
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Box px={4} py={2} bgcolor="#ffffff">
@@ -82,9 +93,15 @@ export default function ThemeItem({
                     <IconButton size="small" onClick={() => onEditMaterial(m)}>
                       <Edit fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" color="error" onClick={() => onDeleteMaterial(m.material_id)}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteMaterialClick(m.material_id)}
+                    >
                       <Delete fontSize="small" />
                     </IconButton>
+
+
                   </Box>
                 </Box>
 
