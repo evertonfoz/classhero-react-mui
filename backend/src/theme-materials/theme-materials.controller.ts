@@ -23,6 +23,7 @@ export class ThemeMaterialsController {
 
   @Get('by-theme/:themeId')
   findAllByTheme(@Param('themeId') themeId: string) {
+    console.log('Fetching materials for theme:', themeId);
     return this.service.findAllByTheme(themeId);
   }
 

@@ -69,6 +69,8 @@ export class ThemeMaterialsService {
       .eq('theme_id', theme_id)
       .order('created_at', { ascending: false });
 
+    console.log('Dados dos materiais:', data);
+
     if (error) throw new Error('Erro ao buscar materiais');
     return data;
   }
