@@ -1,7 +1,6 @@
-import { TableRow, TableCell, IconButton, Tooltip } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { TableRow, TableCell } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import ActionCell from '../../../../components/ui/ActionCell';
 
 interface ClassItem {
   class_id: string;
@@ -24,18 +23,10 @@ export default function ClassRow({ item, onEdit, onDelete }: Props) {
       <TableCell>{item.code}</TableCell>
       <TableCell>{item.year}</TableCell>
       <TableCell>{item.semester}</TableCell>
-      <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-        <Tooltip title="Editar">
-          <IconButton onClick={() => onEdit(item.class_id)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Excluir">
-          <IconButton onClick={() => onDelete(item.class_id)}>
-            <DeleteIcon fontSize="small" color="error" />
-          </IconButton>
-        </Tooltip>
-      </TableCell>
+      <ActionCell
+        onEdit={() => onEdit(item.class_id)}
+        onDelete={() => onDelete(item.class_id)}
+      />
     </TableRow>
   );
 }
