@@ -11,6 +11,8 @@ interface ThemeItemProps {
   description: string;
   expanded: boolean;
   materials: Material[];
+  order: number;
+
   onExpand: (themeId: string) => void;
   onDeleteThemeClick: (themeId: string) => void;
 
@@ -22,42 +24,72 @@ interface ThemeItemProps {
 }
 
 export default function ThemeItem({
-  themeId, title, description, expanded, zebraIndex,
+  themeId, title, description, expanded, zebraIndex, order,
   materials, onExpand, onDeleteThemeClick, onOpenMaterialDialog, handleDeleteMaterialClick, onEditMaterial
 }: ThemeItemProps) {
   return (
     <Box key={themeId} bgcolor={zebraIndex % 2 === 0 ? '#fafafa' : '#ffffff'}>
 
       <ListItem
-  alignItems="flex-start" // <- garante alinhamento ao topo
-  divider
-  sx={{ cursor: 'pointer' }}
-  onClick={() => onExpand(themeId)}
-  secondaryAction={
-    <Box
-      display="flex"
-      flexDirection="row"
-      alignItems="flex-start"  // <- alinha os ícones no topo
-      sx={{ mt: '4px' }}        // <- leve ajuste para alinhar melhor visualmente
-    >
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditMaterial({ material_id: themeId } as any); }}>
-        <Edit fontSize="small" />
-      </IconButton>
-      <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
-        <Delete fontSize="small" />
-      </IconButton>
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
-        {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-      </IconButton>
-    </Box>
-  }
->
-  <ListItemText
-    primary={<Typography variant="h6" fontWeight="bold">{title}</Typography>}
-    secondary={description}
-    sx={{ pr: 8 }}
-  />
-</ListItem>
+        alignItems="flex-start"
+        divider
+        sx={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'stretch',
+        }}
+        onClick={() => onExpand(themeId)}
+        secondaryAction={
+          <Box
+            display="flex"
+            flexDirection="row"
+            alignItems="flex-start"
+            sx={{ mt: '4px' }}
+          >
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditMaterial({ material_id: themeId } as any); }}>
+              <Edit fontSize="small" />
+            </IconButton>
+            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
+              <Delete fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
+              {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+            </IconButton>
+          </Box>
+        }
+      >
+        {/* Número rotacionado */}
+        <Box
+          sx={{
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            color: '#ffffff',
+            backgroundColor: '#212121',
+            fontWeight: 'bold',
+            fontSize: '2.625rem',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: 1.5,
+            borderTopLeftRadius: '4px',
+            borderBottomLeftRadius: '4px',
+            flexShrink: 0,
+          }}
+        >
+          {order}
+        </Box>
+
+        {/* Conteúdo com ajuste de espaço */}
+        <Box sx={{ flex: 1, pl: 2, pr: 10 }}> {/* pr: 6 garante espaço para os ícones */}
+          <ListItemText
+            primary={<Typography variant="h6" fontWeight="bold">{title}</Typography>}
+            secondary={description}
+          />
+        </Box>
+      </ListItem>
+
+
 
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>

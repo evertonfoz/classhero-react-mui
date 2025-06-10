@@ -179,8 +179,6 @@ export class ClassesService {
   }
 }
 
-
-  // classes.service.ts
   async updateClass(class_id: string, body: UpdateClassDto) {
     // Atualiza os dados básicos da turma
     const { error: updateError } = await this.supabase
@@ -255,7 +253,7 @@ export class ClassesService {
         .eq('class_id', class_id);
 
       if (disciplineError) {
-        throw new InternalServerErrorException('Erro ao remover vínculos com disciplinas');
+        throw new InternalServerErrorException('Turma possui disciplinas vinculadas e não pode ser excluída');
       }
 
       // Remove vínculos com alunos
@@ -265,7 +263,7 @@ export class ClassesService {
         .eq('class_id', class_id);
 
       if (studentsError) {
-        throw new InternalServerErrorException('Erro ao remover vínculos com alunos');
+        throw new InternalServerErrorException('Turma possui alunos vinculados e não pode ser excluída');
       }
 
       // Remove a turma
@@ -275,7 +273,7 @@ export class ClassesService {
         .eq('class_id', class_id);
 
       if (classError) {
-        throw new InternalServerErrorException('Erro ao excluir a turma');
+        throw new InternalServerErrorException('Erro ao excluir turma');
       }
 
       return { message: 'Turma excluída com sucesso' };

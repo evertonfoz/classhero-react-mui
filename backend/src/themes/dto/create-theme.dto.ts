@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateThemeDto {
   @IsNotEmpty()
@@ -12,4 +12,8 @@ export class CreateThemeDto {
   @IsNotEmpty()
   @IsString()
   class_discipline_id: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  order: number;
 }

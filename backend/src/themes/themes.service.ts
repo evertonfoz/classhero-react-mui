@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { CreateThemeDto } from './dto/create-theme.dto';
@@ -22,41 +22,55 @@ export class ThemesService {
   async findByClassDiscipline(classDisciplineId: string) {
     const { data, error } = await this.supabase
       .from('themes')
-      .select('theme_id, title, description')
+      .select('theme_id, title, description, order')
       .eq('class_discipline_id', classDisciplineId)
-      .order('title', { ascending: true });
+      .order('order', { ascending: true });
 
     if (error) {
       console.error('Erro ao buscar temas:', error.message);
       throw new InternalServerErrorException('Erro ao buscar temas');
     }
 
-    return { data: (data || []).map((t) => ({
-      id: t.theme_id,
-      title: t.title,
-      description: t.description,
-    })) };
+    return {
+      data: (data || []).map((t) => ({
+        id: t.theme_id,
+        title: t.title,
+        description: t.description,
+        order: t.order,
+      }))
+    };
   }
 
   async createTheme(dto: CreateThemeDto) {
-    console.log('Criando tema:', dto);
     const { data, error } = await this.supabase
       .from('themes')
       .insert({
         title: dto.title,
         description: dto.description,
         class_discipline_id: dto.class_discipline_id,
+        order: dto.order,
       })
       .select('theme_id, title, description')
       .single();
 
     if (error) {
-      console.error('Erro ao criar tema:', error.message);
+      if (error.message.includes('unique_order_per_class_discipline')) {
+        throw new BadRequestException('Já existe um tema com essa ordem para essa disciplina.');
+      }
+
       throw new InternalServerErrorException('Erro ao criar tema');
     }
 
-    return { data: { id: data.theme_id, title: data.title, description: data.description } };
+    return {
+      data: {
+        id: data.theme_id,
+        title: data.title,
+        description: data.description,
+        order: dto.order,
+      },
+    };
   }
+
 
   async updateTheme(id: string, dto: UpdateThemeDto) {
     console.log('Atualizando tema:', id, dto);

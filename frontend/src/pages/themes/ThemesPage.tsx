@@ -25,6 +25,7 @@ interface Theme {
   id: string;
   title: string;
   description: string;
+  order: number;
 }
 
 export default function ThemesPage() {
@@ -48,6 +49,9 @@ export default function ThemesPage() {
   const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
   const [confirmDeleteThemeOpen, setConfirmDeleteThemeOpen] = useState(false);
 
+  const [newOrder, setNewOrder] = useState<number | ''>('');
+
+
 
   const fetchThemes = async () => {
     try {
@@ -61,6 +65,7 @@ export default function ThemesPage() {
         id: t.theme_id || t.id,
         title: t.title,
         description: t.description,
+        order: t.order,
       })));
     } catch (err) {
       console.error('Erro ao carregar temas:', err);
@@ -186,6 +191,8 @@ export default function ThemesPage() {
 
   const handleCreateTheme = async () => {
     const token = localStorage.getItem('access_token');
+
+
     try {
       const res = await fetch('http://localhost:3000/themes', {
         method: 'POST',
@@ -197,23 +204,41 @@ export default function ThemesPage() {
           title: newTitle,
           description: newDescription,
           class_discipline_id: classDisciplineId,
+          order: Number(newOrder)
+
         }),
       });
 
-      const { data } = await res.json();
+      const json = await res.json();
+
       if (res.ok) {
-        setThemes((prev) => [...prev, { id: data.theme_id, title: data.title, description: data.description }]);
+        const { data } = json;
+        setThemes((prev) => [
+          ...prev,
+          {
+            id: data.theme_id,
+            title: data.title,
+            description: data.description,
+            order: data.order,
+          },
+        ]);
         setOpenDialog(false);
         setNewTitle('');
         setNewDescription('');
         enqueueSnackbar('Tema criado com sucesso.', { variant: 'success' });
       } else {
-        enqueueSnackbar('Erro ao criar tema.', { variant: 'error' });
+        if (json.message.includes('ordem')) {
+          enqueueSnackbar('Você já cadastrou um tema com essa ordem para essa disciplina. Escolha outro número.', { variant: 'warning' });
+        } else {
+          enqueueSnackbar(json.message, { variant: 'error' });
+        }
+
       }
-    } catch (err) {
-      enqueueSnackbar('Erro ao criar tema.', { variant: 'error' });
+    } catch (err: any) {
+        enqueueSnackbar(err?.message, { variant: 'error' });
     }
   };
+
 
   const handleCreateMaterial = async () => {
     if (!openMaterialDialogFor || !newMaterial.name || !newMaterial.type) return;
@@ -278,21 +303,22 @@ export default function ThemesPage() {
             onEditMaterial={handleEditMaterial}
             handleDeleteMaterialClick={handleDeleteMaterialClick}
             onDeleteThemeClick={onDeleteThemeClick}
+            order={t.order}
 
           />
         ))}
       </List>
 
       {themes.length === 0 && (
-  <Typography
-    variant="body1"
-    color="text.secondary"
-    textAlign="center"
-    mt={0}
-  >
-    Nenhum tema cadastrado ainda. Clique no botão <strong>+</strong> para adicionar o primeiro tema.
-  </Typography>
-)}
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          textAlign="center"
+          mt={0}
+        >
+          Nenhum tema cadastrado ainda. Clique no botão <strong>+</strong> para adicionar o primeiro tema.
+        </Typography>
+      )}
 
 
       <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1000 }}>
@@ -309,6 +335,15 @@ export default function ThemesPage() {
         <DialogTitle>Novo Tema</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
           <Box pt={1}>
+            <TextField
+              label="Ordem"
+              type="number"
+              value={newOrder}
+              onChange={(e) => setNewOrder(e.target.value === '' ? '' : Number(e.target.value))}
+              fullWidth
+              margin="normal"
+            />
+
             <TextField label="Título" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} fullWidth autoFocus margin="normal" />
             <TextField label="Descrição" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} multiline rows={4} fullWidth margin="normal" />
           </Box>
@@ -317,7 +352,16 @@ export default function ThemesPage() {
           {newTitle || newDescription ? (
             <>
               <Button onClick={() => { setNewTitle(''); setNewDescription(''); }}>Cancelar</Button>
-              <Button onClick={handleCreateTheme} disabled={!newTitle.trim() || !newDescription.trim()} variant="contained">Salvar</Button>
+              <Button
+                onClick={handleCreateTheme}
+                disabled={
+                  !newTitle.trim() || !newDescription.trim() || newOrder === '' || isNaN(Number(newOrder))
+                }
+                variant="contained"
+              >
+                Salvar
+              </Button>
+
             </>
           ) : (
             <Button onClick={() => setOpenDialog(false)}>Fechar</Button>
