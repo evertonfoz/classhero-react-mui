@@ -14,11 +14,15 @@ import {
   DialogActions,
   TextField,
   Button,
-  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Edit, Delete, ArrowBack, Add, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 
 interface Theme {
   id: string;
@@ -31,12 +35,14 @@ interface Material {
   name: string;
   type: string;
   url: string;
+  description?: string;
 }
 
 export default function ThemesPage() {
   const { classId, classDisciplineId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { enqueueSnackbar } = useSnackbar();
   const { disciplineName, teacherName, classCode } = location.state || {};
 
   const [themes, setThemes] = useState<Theme[]>([]);
@@ -45,11 +51,8 @@ export default function ThemesPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [snack, setSnack] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [openMaterialDialogFor, setOpenMaterialDialogFor] = useState<string | null>(null);
+  const [newMaterial, setNewMaterial] = useState<Partial<Material> & { file?: File }>({});
 
   const fetchThemes = async () => {
     try {
@@ -59,13 +62,11 @@ export default function ThemesPage() {
       });
       const { data } = await res.json();
 
-      setThemes(
-        (data || []).map((t: any) => ({
-          id: t.theme_id || t.id,
-          title: t.title,
-          description: t.description,
-        }))
-      );
+      setThemes((data || []).map((t: any) => ({
+        id: t.theme_id || t.id,
+        title: t.title,
+        description: t.description,
+      })));
     } catch (err) {
       console.error('Erro ao carregar temas:', err);
     }
@@ -74,7 +75,7 @@ export default function ThemesPage() {
   const fetchMaterials = async (themeId: string) => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`http://localhost:3000/materials/by-theme/${themeId}`, {
+      const res = await fetch(`http://localhost:3000/theme-materials/by-theme/${themeId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const { data } = await res.json();
@@ -105,10 +106,10 @@ export default function ThemesPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setThemes((prev) => prev.filter((t) => t.id !== id));
-      setSnack({ open: true, message: 'Tema excluído com sucesso.', severity: 'success' });
+      enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
     } catch (err) {
       console.error('Erro ao excluir tema:', err);
-      setSnack({ open: true, message: 'Erro ao excluir tema.', severity: 'error' });
+      enqueueSnackbar('Erro ao excluir tema.', { variant: 'error' });
     }
   };
 
@@ -134,15 +135,59 @@ export default function ThemesPage() {
         setOpenDialog(false);
         setNewTitle('');
         setNewDescription('');
-        setSnack({ open: true, message: 'Tema criado com sucesso.', severity: 'success' });
+        enqueueSnackbar('Tema criado com sucesso.', { variant: 'success' });
       } else {
-        setSnack({ open: true, message: 'Erro ao criar tema.', severity: 'error' });
+        enqueueSnackbar('Erro ao criar tema.', { variant: 'error' });
       }
     } catch (err) {
-      setSnack({ open: true, message: 'Erro ao criar tema.', severity: 'error' });
+      enqueueSnackbar('Erro ao criar tema.', { variant: 'error' });
     }
   };
 
+  const handleCreateMaterial = async () => {
+    if (!openMaterialDialogFor || !newMaterial.name || !newMaterial.type) return;
+
+    const formData = new FormData();
+    formData.append('theme_id', openMaterialDialogFor);
+    formData.append('type', newMaterial.type);
+    formData.append('title', newMaterial.name);
+    if (newMaterial.description) formData.append('description', newMaterial.description);
+    if (newMaterial.url && newMaterial.type !== 'pdf') formData.append('content', newMaterial.url);
+    if (newMaterial.file) formData.append('file', newMaterial.file);
+
+    const token = localStorage.getItem('access_token');
+    try {
+      const res = await fetch('http://localhost:3000/theme-materials', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      await res.json();
+      if (res.ok) {
+        enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
+        fetchMaterials(openMaterialDialogFor);
+       setOpenMaterialDialogFor(null);
+
+setTimeout(() => {
+  setNewMaterial({});
+}, 100); // Aguarda 100ms antes de limpar
+
+      } else {
+        throw new Error();
+      }
+    } catch (err) {
+      console.error('Erro ao salvar material:', err);
+      enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
+    }
+  };
+
+  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewMaterial((prev) => ({ ...prev, file }));
+    }
+  };
   return (
     <Box p={3} width="100%">
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
@@ -162,7 +207,7 @@ export default function ThemesPage() {
               onClick={() => handleExpand(t.id)}
               secondaryAction={
                 <>
-                  <IconButton onClick={(e) => { e.stopPropagation(); /* editar */ }}><Edit /></IconButton>
+                  <IconButton onClick={(e) => { e.stopPropagation(); }}><Edit /></IconButton>
                   <IconButton onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }} color="error">
                     <Delete />
                   </IconButton>
@@ -194,6 +239,16 @@ export default function ThemesPage() {
                     Nenhum material disponível.
                   </Typography>
                 )}
+                <Box display="flex" justifyContent="flex-end" mt={2}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Add />}
+                    onClick={() => setOpenMaterialDialogFor(t.id)}
+                  >
+                    Novo Material
+                  </Button>
+                </Box>
               </Box>
             </Collapse>
           </Box>
@@ -239,7 +294,7 @@ export default function ThemesPage() {
         </IconButton>
       </Box>
 
-      <Dialog open={openDialog} onClose={() => {}} fullWidth maxWidth="sm">
+      <Dialog open={openDialog} onClose={() => { }} fullWidth maxWidth="sm">
         <DialogTitle>Novo Tema</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
           <Box pt={1}>
@@ -276,12 +331,103 @@ export default function ThemesPage() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+    open={!!openMaterialDialogFor}
+    onClose={(e, reason) => reason !== 'backdropClick' && setOpenMaterialDialogFor(null)}
+    disableEscapeKeyDown
+    fullWidth
+    maxWidth="sm"
+  >
+    <DialogTitle>Novo Material</DialogTitle>
+    <DialogContent>
+      <TextField
+        label="Nome"
+        value={newMaterial.name || ''}
+        onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
+        fullWidth
+        margin="normal"
+      />
+
+      <TextField
+        label="Descrição"
+        value={newMaterial.description || ''}
+        onChange={(e) => setNewMaterial({ ...newMaterial, description: e.target.value })}
+        fullWidth
+        multiline
+        rows={2}
+        margin="normal"
+      />
+
+      <FormControl fullWidth margin="normal">
+        <InputLabel id="type-label">Tipo</InputLabel>
+        <Select
+          labelId="type-label"
+          value={newMaterial.type || ''}
+          label="Tipo"
+          onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value })}
+        >
+          <MenuItem value="text">Texto</MenuItem>
+          <MenuItem value="video">Vídeo</MenuItem>
+          <MenuItem value="link">Link</MenuItem>
+          <MenuItem value="pdf">PDF</MenuItem>
+          <MenuItem value="quiz">Quiz</MenuItem>
+          <MenuItem value="other">Outro</MenuItem>
+        </Select>
+      </FormControl>
+
+      {newMaterial.type !== 'pdf' && (
+        <TextField
+          label="URL"
+          value={newMaterial.url || ''}
+          onChange={(e) => setNewMaterial({ ...newMaterial, url: e.target.value })}
+          fullWidth
+          margin="normal"
+        />
+      )}
+
+      {newMaterial.type === 'pdf' && (
+        <>
+          {newMaterial.file && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+              Arquivo selecionado: <strong>{newMaterial.file.name}</strong>
+            </Typography>
+          )}
+
+          <Button
+            variant="outlined"
+            component="label"
+            fullWidth
+          >
+            Selecionar PDF
+            <input
+              type="file"
+              accept="application/pdf"
+              hidden
+              onChange={handleFileSelection}
+            />
+          </Button>
+        </>
+      )}
+    </DialogContent>
+
+    <DialogActions>
+      <Button onClick={() => setOpenMaterialDialogFor(null)}>Fechar</Button>
+      <Button
+        onClick={handleCreateMaterial}
+        disabled={!newMaterial.name || !newMaterial.type || (newMaterial.type !== 'pdf' && !newMaterial.url)}
+        variant="contained"
+      >
+        Salvar
+      </Button>
+    </DialogActions>
+  </Dialog>
+{/* 
       <Snackbar
         open={snack.open}
         onClose={() => setSnack({ ...snack, open: false })}
         autoHideDuration={4000}
         message={snack.message}
-      />
+      /> */}
     </Box>
   );
 }
