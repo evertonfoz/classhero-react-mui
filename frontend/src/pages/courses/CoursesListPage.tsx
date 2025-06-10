@@ -1,18 +1,10 @@
 import {
   Box,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  Paper,
-  Pagination,
-  CircularProgress,
+  Fab,
   useMediaQuery,
   useTheme,
-  Fab,
+  TableCell,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
 import SchoolIcon from '@mui/icons-material/School';
@@ -26,6 +18,7 @@ import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import CourseRow from './components/listpage/CourseRow';
 import CourseFilter from './components/listpage/CourseFilter';
 import usePaginatedFetch from '../../hooks/usePaginatedFetch';
+import PaginatedTable from '../../components/ui/PaginatedTable';
 
 
 
@@ -139,45 +132,29 @@ export default function CoursesListPage() {
       />
 
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <TableContainer component={Paper} sx={{ mb: 1 }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nome</TableCell>
-                  <TableCell>Sigla</TableCell>
-                  <TableCell align="center">Ativo</TableCell>
-                  <TableCell align="center">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {courses.map((course) => (
-                  <CourseRow
-                    key={course.course_id}
-                    course={course}
-                    onEdit={(id) => navigate(`/home/cursos/editar/${id}`)}
-                    onDelete={openDeleteDialog}
-                  />
-                ))}
-              </TableBody>
-
-            </Table>
-          </TableContainer>
-
-          <Pagination
-            count={totalPages}
-            page={currentPage}
-            onChange={(_, value) => setCurrentPage(value)}
-            sx={{ mt: 0.5, display: 'flex', justifyContent: 'center' }}
+      <PaginatedTable
+        items={courses}
+        loading={loading}
+        columns={
+          <>
+            <TableCell>Nome</TableCell>
+            <TableCell>Sigla</TableCell>
+            <TableCell align="center">Ativo</TableCell>
+            <TableCell align="center">Ações</TableCell>
+          </>
+        }
+        renderRow={(course) => (
+          <CourseRow
+            key={course.course_id}
+            course={course}
+            onEdit={(id) => navigate(`/home/cursos/editar/${id}`)}
+            onDelete={openDeleteDialog}
           />
-        </>
-      )}
+        )}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
 
       <Fab

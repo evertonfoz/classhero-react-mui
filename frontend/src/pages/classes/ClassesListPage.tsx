@@ -1,18 +1,10 @@
 import {
   Box,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  Paper,
-  Pagination,
-  CircularProgress,
   Fab,
   useMediaQuery,
   useTheme,
+  TableCell,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
 import ClassIcon from '@mui/icons-material/Class';
@@ -27,6 +19,7 @@ import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import ClassRow from './components/listpage/ClassRow';
 import ClassFilter from './components/listpage/ClassFilter';
 import usePaginatedFetch from '../../hooks/usePaginatedFetch';
+import PaginatedTable from '../../components/ui/PaginatedTable';
 
 interface ClassItem {
   class_id: string;
@@ -120,43 +113,29 @@ export default function ClassesListPage() {
         }}
       />
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <TableContainer component={Paper} sx={{ mb: 1 }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Ano</TableCell>
-                  <TableCell>Semestre</TableCell>
-                  <TableCell align="center">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {items.map((item) => (
-                  <ClassRow
-                    key={item.class_id}
-                    item={item}
-                    onEdit={(id) => navigate(`/home/turmas/editar/${id}`)}
-                    onDelete={openDeleteDialog}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Pagination
-            count={totalPages}
-            page={currentPage}
-            onChange={(_, value) => setCurrentPage(value)}
-            sx={{ mt: 0.5, display: 'flex', justifyContent: 'center' }}
+      <PaginatedTable
+        items={items}
+        loading={loading}
+        columns={
+          <>
+            <TableCell>Código</TableCell>
+            <TableCell>Ano</TableCell>
+            <TableCell>Semestre</TableCell>
+            <TableCell align="center">Ações</TableCell>
+          </>
+        }
+        renderRow={(item) => (
+          <ClassRow
+            key={item.class_id}
+            item={item}
+            onEdit={(id) => navigate(`/home/turmas/editar/${id}`)}
+            onDelete={openDeleteDialog}
           />
-        </>
-      )}
+        )}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Fab
         color="primary"

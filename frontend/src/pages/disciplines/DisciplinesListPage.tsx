@@ -1,19 +1,11 @@
 import {
   Box,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  Paper,
-  Pagination,
-  CircularProgress,
-  useMediaQuery,
-  useTheme,
   Fab,
   TextField,
+  useMediaQuery,
+  useTheme,
+  TableCell,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -26,6 +18,7 @@ import { useSnackbar } from 'notistack';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 import DisciplineRow from './components/listpage/DisciplineRow';
 import usePaginatedFetch from '../../hooks/usePaginatedFetch';
+import PaginatedTable from '../../components/ui/PaginatedTable';
 
 interface Discipline {
   discipline_id: string;
@@ -123,44 +116,30 @@ export default function DisciplinesListPage() {
         sx={{ mb: 3 }}
       />
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <TableContainer component={Paper} sx={{ mb: 1 }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ minWidth: isMobile ? 120 : 200 }}>Nome</TableCell>
-                  <TableCell sx={{ minWidth: isMobile ? 80 : 140 }}>Carga Horária</TableCell>
-                  <TableCell sx={{ minWidth: isMobile ? 100 : 160 }} align="center">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {disciplines.map((discipline) => (
-                  <DisciplineRow
-                    key={discipline.discipline_id}
-                    discipline={discipline}
-                    onEdit={(id) => navigate(`/home/disciplinas/editar/${id}`)}
-                    onDelete={openDeleteDialog}
-                    isMobile={isMobile}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Pagination
-            count={totalPages}
-            page={currentPage}
-            onChange={(_, value) => setCurrentPage(value)}
-            sx={{ mt: 0.5, display: 'flex', justifyContent: 'center' }}
+      <PaginatedTable
+        items={disciplines}
+        loading={loading}
+        columns={
+          <>
+            <TableCell sx={{ minWidth: isMobile ? 120 : 200 }}>Nome</TableCell>
+            <TableCell sx={{ minWidth: isMobile ? 80 : 140 }}>Carga Horária</TableCell>
+            <TableCell sx={{ minWidth: isMobile ? 100 : 160 }} align="center">Ações</TableCell>
+          </>
+        }
+        renderRow={(discipline) => (
+          <DisciplineRow
+            key={discipline.discipline_id}
+            discipline={discipline}
+            onEdit={(id) => navigate(`/home/disciplinas/editar/${id}`)}
+            onDelete={openDeleteDialog}
+            isMobile={isMobile}
           />
-        </>
-      )}
+        )}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        minWidth={isMobile ? 280 : 500}
+      />
 
       <Fab
         color="primary"
