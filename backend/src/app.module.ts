@@ -8,6 +8,7 @@ import { CoursesModule } from './courses/courses.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
 import { ClassesModule } from './classes/classes.module';
 import { ThemesModule } from './themes/themes.module';
+import { ThemeMaterialsModule } from './theme-materials/theme-materials.module';
 
 
 @Module({
@@ -19,7 +20,8 @@ import { ThemesModule } from './themes/themes.module';
     CoursesModule,
     DisciplinesModule,
     ClassesModule,
-    ThemesModule
+    ThemesModule,
+    ThemeMaterialsModule
   ],
   controllers: [AppController],
   providers: [AppService],
