@@ -1,11 +1,5 @@
-import {
-  Box,
-  TextField,
-  InputLabel,
-  FormControl,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import SearchFilterBar from '../../../../components/ui/SearchFilterBar';
+import { InputLabel, FormControl, Select, MenuItem } from '@mui/material';
 
 interface Props {
   searchTerm: string;
@@ -21,15 +15,11 @@ export default function CourseFilter({
   onStatusChange,
 }: Props) {
   return (
-    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
-      <TextField
-        fullWidth
-        placeholder="Pesquisar por nome ou sigla..."
-        variant="outlined"
-        size="small"
-        value={searchTerm}
-        onChange={(e) => onSearchChange(e.target.value)}
-      />
+    <SearchFilterBar
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      placeholder="Pesquisar por nome ou sigla..."
+    >
       <FormControl size="small" sx={{ minWidth: 160 }}>
         <InputLabel>Status</InputLabel>
         <Select
@@ -42,6 +32,6 @@ export default function CourseFilter({
           <MenuItem value="false">Inativo</MenuItem>
         </Select>
       </FormControl>
-    </Box>
+    </SearchFilterBar>
   );
 }

@@ -1,4 +1,4 @@
-import { Box, TextField } from '@mui/material';
+import SearchFilterBar from '../../../../components/ui/SearchFilterBar';
 
 interface Props {
   searchTerm: string;
@@ -7,15 +7,10 @@ interface Props {
 
 export default function ClassFilter({ searchTerm, onSearchChange }: Props) {
   return (
-    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
-      <TextField
-        fullWidth
-        placeholder="Pesquisar por código..."
-        variant="outlined"
-        size="small"
-        value={searchTerm}
-        onChange={(e) => onSearchChange(e.target.value)}
-      />
-    </Box>
+    <SearchFilterBar
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      placeholder="Pesquisar por código..."
+    />
   );
 }

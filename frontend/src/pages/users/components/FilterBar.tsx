@@ -1,12 +1,12 @@
 import {
   Box,
-  TextField,
   useMediaQuery,
   useTheme,
   Menu,
   MenuItem,
   Button,
 } from '@mui/material';
+import SearchFilterBar from '../../../components/ui/SearchFilterBar';
 import { useState } from 'react';
 
 interface FilterBarProps {
@@ -56,16 +56,13 @@ export default function FilterBar({
   };
 
   return (
-    <Box display="flex" flexWrap="wrap" alignItems="center" gap={2} mb={3}>
-      <TextField
-        placeholder="Pesquisar por email ou nome..."
-        variant="outlined"
-        size="small"
-        value={searchTerm}
-        onChange={(e) => onSearchChange(e.target.value)}
-        sx={{ flexGrow: 1, minWidth: 240 }}
-      />
-
+    <SearchFilterBar
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      placeholder="Pesquisar por email ou nome..."
+      boxProps={{ alignItems: 'center' }}
+      textFieldProps={{ sx: { flexGrow: 1, minWidth: 240 } }}
+    >
       {isMobile ? (
         <>
           <Button variant="outlined" onClick={handleMenuClick}>
@@ -106,6 +103,6 @@ export default function FilterBar({
           </Box>
         ))
       )}
-    </Box>
+    </SearchFilterBar>
   );
 }
