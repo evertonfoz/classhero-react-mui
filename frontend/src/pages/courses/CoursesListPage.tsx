@@ -91,8 +91,11 @@ export default function CoursesListPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao excluir curso');
+        const { message } = await response.json();
+        enqueueSnackbar(message || 'Erro ao excluir curso.', { variant: 'error' });
+        return;
       }
+
 
       enqueueSnackbar('Curso excluído com sucesso!', { variant: 'success' });
       fetchCourses();

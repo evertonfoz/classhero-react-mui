@@ -1,7 +1,6 @@
-import { TableRow, TableCell, IconButton, Tooltip } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { TableRow, TableCell } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import ActionCell from '../../../../components/ui/ActionCell';
 
 interface Discipline {
   discipline_id: string;
@@ -32,22 +31,11 @@ export default function DisciplineRow({ discipline, onEdit, onDelete, isMobile }
       <TableCell sx={{ minWidth: isMobile ? 80 : 140 }}>
         {discipline.workload_hours}h
       </TableCell>
-      <TableCell
-        align="center"
+      <ActionCell
+        onEdit={() => onEdit(discipline.discipline_id)}
+        onDelete={() => onDelete(discipline.discipline_id)}
         sx={{ minWidth: isMobile ? 100 : 160 }}
-        onClick={(e) => e.stopPropagation()} // 🔒 evita propagação do clique da célula
-      >
-        <Tooltip title="Editar">
-          <IconButton onClick={() => onEdit(discipline.discipline_id)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Excluir">
-          <IconButton onClick={() => onDelete(discipline.discipline_id)}>
-            <DeleteIcon fontSize="small" color="error" />
-          </IconButton>
-        </Tooltip>
-      </TableCell>
+      />
     </TableRow>
   );
 }
