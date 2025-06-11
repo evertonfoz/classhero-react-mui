@@ -98,7 +98,65 @@ export class ThemeMaterialsService {
     return data;
   }
 
-  async update(id: string, dto: UpdateThemeMaterialDto) {
+  async update(id: string, dto: UpdateThemeMaterialDto, file?: Express.Multer.File) {
+    const bucket = 'classhero_bucket';
+    let finalUrl: string | undefined;
+    let oldFilePath = '';
+
+    if (file) {
+      const { data: existing, error: fetchError } = await this.supabase
+        .from('theme_materials')
+        .select('content')
+        .eq('material_id', id)
+        .single();
+
+      if (!fetchError && existing?.content) {
+        try {
+          const parsed = JSON.parse(existing.content);
+          const url = parsed.publicUrl || existing.content;
+          oldFilePath = new URL(url).pathname.replace(
+            /^\/storage\/v1\/object\/public\/classhero_bucket\//,
+            '',
+          );
+        } catch {
+          try {
+            oldFilePath = new URL(existing.content).pathname.replace(
+              /^\/storage\/v1\/object\/public\/classhero_bucket\//,
+              '',
+            );
+          } catch {}
+        }
+
+        if (!dto.type) {
+          dto.type = 'pdf';
+        }
+      }
+
+      const filename = `${uuidv4()}_${file.originalname}`;
+      const { error: uploadError } = await this.supabase.storage
+        .from(bucket)
+        .upload(`materials/pdfs/${filename}`, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new InternalServerErrorException('Erro ao subir PDF');
+      }
+
+      const { data: publicUrlData } = this.supabase.storage
+        .from(bucket)
+        .getPublicUrl(`materials/pdfs/${filename}`);
+
+      finalUrl = publicUrlData?.publicUrl;
+
+      if (!finalUrl) {
+        throw new InternalServerErrorException('Erro ao obter URL pública do PDF');
+      }
+
+      dto.content = finalUrl;
+    }
+
     const { data, error } = await this.supabase
       .from('theme_materials')
       .update(dto)
@@ -107,6 +165,11 @@ export class ThemeMaterialsService {
       .single();
 
     if (error) throw new NotFoundException('Erro ao atualizar material');
+
+    if (file && oldFilePath) {
+      await this.supabase.storage.from(bucket).remove([oldFilePath]);
+    }
+
     return data;
   }
 

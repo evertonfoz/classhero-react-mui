@@ -43,8 +43,23 @@ export class ThemeMaterialsController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateThemeMaterialDto) {
-    return this.service.update(id, dto);
+  @UseInterceptors(FileInterceptor('file'))
+  async update(
+    @Param('id') id: string,
+    @Body() body: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const dto = plainToInstance(UpdateThemeMaterialDto, body);
+    try {
+      await validateOrReject(dto, { whitelist: true, forbidNonWhitelisted: true });
+    } catch (errors) {
+      const validationErrors = errors
+        .map((e) => Object.values(e.constraints || {}))
+        .flat();
+      throw new BadRequestException(validationErrors);
+    }
+
+    return this.service.update(id, dto, file);
   }
 
   @Delete(':id')

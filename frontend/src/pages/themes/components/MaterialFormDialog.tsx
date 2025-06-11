@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
+import { Stack } from '@mui/material';
 
 interface MaterialFormDialogProps {
   open: boolean;
@@ -39,6 +40,25 @@ interface MaterialForm {
   order: string;
 }
 
+function extractFileName(content?: string) {
+  if (!content) return '';
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.fileName) return parsed.fileName;
+    if (parsed.publicUrl) {
+      return decodeURIComponent(parsed.publicUrl.split('/').pop() || '');
+    }
+  } catch {
+    try {
+      const clean = content.split('?')[0];
+      return decodeURIComponent(clean.split('/').pop() || '');
+    } catch {
+      return '';
+    }
+  }
+  return '';
+}
+
 export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, isEditing = false, initialData }: MaterialFormDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -52,6 +72,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
   });
 
   const [originalData, setOriginalData] = useState<MaterialForm | null>(null);
+  const [existingFileName, setExistingFileName] = useState('');
+  const [removeExistingFile, setRemoveExistingFile] = useState(false);
 
   const hasAnyValue = Object.values(material).some((value) => {
     if (typeof value === 'string') return value.trim() !== '';
@@ -60,25 +82,38 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
   });
 
   const hasChanges = isEditing
-    ? originalData &&
-      (material.name !== originalData.name ||
-        material.description !== originalData.description ||
-        material.type !== originalData.type ||
-        material.url !== originalData.url ||
-        material.order !== originalData.order)
+    ?
+        originalData &&
+        (material.name !== originalData.name ||
+          material.description !== originalData.description ||
+          material.type !== originalData.type ||
+          material.url !== originalData.url ||
+          material.order !== originalData.order ||
+          !!material.file ||
+          removeExistingFile)
     : hasAnyValue;
 
   const isFormValid =
     material.name.trim() !== '' &&
     material.type !== '' &&
     material.order.trim() !== '' &&
-    (isEditing ? true : material.type !== 'pdf' || material.file);
+    (material.type !== 'pdf'
+      ? true
+      : isEditing
+      ? !removeExistingFile || !!material.file
+      : !!material.file);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setMaterial((prev) => ({ ...prev, file }));
+      setRemoveExistingFile(false);
     }
+  };
+
+  const handleRemoveFile = () => {
+    setMaterial((prev) => ({ ...prev, file: undefined }));
+    setRemoveExistingFile(true);
   };
 
   const handleSubmit = async () => {
@@ -88,22 +123,39 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
     try {
       if (isEditing && initialData) {
-        const payload = {
-          title: material.name,
-          description: material.description,
-          type: material.type,
-          content: material.type !== 'pdf' ? material.url : initialData.content,
-        };
+        if (material.file) {
+          const formData = new FormData();
+          formData.append('title', material.name);
+          formData.append('description', material.description);
+          formData.append('type', material.type);
+          formData.append('order', material.order);
+          formData.append('file', material.file);
 
-        const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(payload),
-        });
+          const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
 
-        if (!res.ok) throw new Error();
+          if (!res.ok) throw new Error();
+          enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+        } else {
+          const payload = {
+            title: material.name,
+            description: material.description,
+            type: material.type,
+            content: material.type !== 'pdf' ? material.url : initialData.content,
+          };
 
-        enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+          const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error();
+          enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+        }
       } else {
         if (!themeId) return;
         const formData = new FormData();
@@ -128,6 +180,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
       onSuccess();
       setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
+      setExistingFileName('');
+      setRemoveExistingFile(false);
     } catch {
       enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
     }
@@ -146,10 +200,14 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
       } as MaterialForm;
       setMaterial({ ...data, file: undefined });
       setOriginalData({ ...data, file: undefined });
+      setExistingFileName(extractFileName(initialData.content));
+      setRemoveExistingFile(false);
     } else {
       const empty = { name: '', description: '', type: '', url: '', file: undefined, order: '' };
       setMaterial(empty);
       setOriginalData(empty);
+      setExistingFileName('');
+      setRemoveExistingFile(false);
     }
   }, [open, isEditing, initialData]);
 
@@ -228,21 +286,34 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
         {material.type === 'pdf' && (
           <>
-            {material.file && (
+            {material.file ? (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
                 Arquivo selecionado: <strong>{material.file.name}</strong>
               </Typography>
+            ) : (
+              existingFileName && !removeExistingFile && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+                  Arquivo atual: <strong>{existingFileName}</strong>
+                </Typography>
+              )
             )}
 
-            <Button variant="outlined" component="label" fullWidth>
-              Selecionar PDF
-              <input
-                type="file"
-                accept="application/pdf"
-                hidden
-                onChange={handleFileSelection}
-              />
-            </Button>
+            <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
+              <Button variant="outlined" component="label" fullWidth>
+                {material.file ? 'Trocar PDF' : 'Selecionar PDF'}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  hidden
+                  onChange={handleFileSelection}
+                />
+              </Button>
+              {isEditing && existingFileName && !material.file && !removeExistingFile && (
+                <Button color="error" variant="outlined" onClick={handleRemoveFile}>
+                  Remover
+                </Button>
+              )}
+            </Stack>
           </>
         )}
       </DialogContent>
@@ -256,6 +327,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
               onClick={() => {
                 if (isEditing && originalData) {
                   setMaterial({ ...originalData });
+                  setExistingFileName(extractFileName(initialData?.content));
+                  setRemoveExistingFile(false);
                 } else {
                   setMaterial({
                     name: '',
@@ -265,6 +338,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
                     file: undefined,
                     order: '',
                   });
+                  setExistingFileName('');
+                  setRemoveExistingFile(false);
                 }
               }}
             >
