@@ -54,6 +54,7 @@ export class ThemesService {
       .single();
 
     if (error) {
+      console.error('Erro ao criar tema:', error);
       if (error.message.includes('unique_order_per_class_discipline')) {
         throw new BadRequestException('Já existe um tema com essa ordem para essa disciplina.');
       }

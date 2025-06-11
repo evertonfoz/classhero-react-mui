@@ -47,13 +47,10 @@ export default function ThemeItem({
             alignItems="flex-start"
             sx={{ mt: '4px' }}
           >
-            <IconButton onClick={() => onEditTheme(themeId)}>
+            <IconButton onClick={(e) => { e.stopPropagation(); onEditTheme(themeId); }}>
               <Edit fontSize="small" />
             </IconButton>
 
-            {/* <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditTheme({ theme_id: themeId } as any); }}>
-              <Edit fontSize="small" />
-            </IconButton> */}
             <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
               <Delete fontSize="small" />
             </IconButton>

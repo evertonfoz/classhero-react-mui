@@ -76,16 +76,24 @@ export default function ThemesPage() {
 
 
   const confirmDeleteTheme = async () => {
+    console.log('Confirmando exclusão do tema:', themeToDelete);
     if (!themeToDelete) return;
 
     const token = localStorage.getItem('access_token');
+
     try {
-      await fetch(`http://localhost:3000/themes/${themeToDelete}`, {
+      const res = await fetch(`http://localhost:3000/themes/${themeToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      setThemes((prev) => prev.filter((t) => t.id !== themeToDelete));
-      enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
+
+      if (res.ok) {
+        enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
+        setThemes((prev) => prev.filter((t) => t.id !== themeToDelete));
+      } else {
+        const json = await res.json();
+        enqueueSnackbar(json.message || 'Erro ao excluir tema.', { variant: 'error' });
+      }
     } catch (err) {
       console.error('Erro ao excluir tema:', err);
       enqueueSnackbar('Erro ao excluir tema.', { variant: 'error' });
@@ -94,6 +102,7 @@ export default function ThemesPage() {
       setThemeToDelete(null);
     }
   };
+
 
   const onDeleteThemeClick = (themeId: string) => {
     setThemeToDelete(themeId);
@@ -370,6 +379,7 @@ export default function ThemesPage() {
       </Box>
 
       <ThemeFormDialog
+      
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
