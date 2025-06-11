@@ -145,15 +145,29 @@ export default function ThemesPage() {
 
 
   const handleEditTheme = (id: string) => {
-    const tema = themes.find((t) => t.id === id);
-    if (!tema) return;
+    console.log('Iniciando edição do tema com id:', id);
+    if (!id) {
+      console.warn('ID de tema inválido para edição');
+      return;
+    }
 
+    const tema = themes.find((t) => t.id === id);
+
+    if (!tema) {
+      console.warn('Tema não encontrado com id:', id);
+      return;
+    }
+
+    console.log('Editando tema com id:', id);
     setEditandoTemaId(id);
     setNewTitle(tema.title);
     setNewDescription(tema.description);
     setNewOrder(tema.order);
     setOpenDialog(true);
   };
+
+
+
 
 
   const handleEditMaterial = (material: Material) => {
@@ -196,20 +210,6 @@ export default function ThemesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const token = localStorage.getItem('access_token');
-    try {
-      await fetch(`http://localhost:3000/themes/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setThemes((prev) => prev.filter((t) => t.id !== id));
-      enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
-    } catch (err) {
-      console.error('Erro ao excluir tema:', err);
-      enqueueSnackbar('Erro ao excluir tema.', { variant: 'error' });
-    }
-  };
 
   const handleSalvarTema = async () => {
     console.log(editandoTemaId);
@@ -251,11 +251,11 @@ export default function ThemesPage() {
           );
           enqueueSnackbar('Tema atualizado com sucesso.', { variant: 'success' });
         } else {
-          // Adiciona novo tema
+          console.log('Tema criado:', data);
           setThemes((prev) => [
             ...prev,
             {
-              id: data.theme_id,
+              id: editandoTemaId ?? data.theme_id,
               title: data.title,
               description: data.description,
               order: data.order,
@@ -263,6 +263,7 @@ export default function ThemesPage() {
           ]);
           enqueueSnackbar('Tema criado com sucesso.', { variant: 'success' });
         }
+        await fetchThemes(); // Garante que a lista seja recarregada com IDs corretos
 
         // Limpa estado
         setOpenDialog(false);
@@ -288,39 +289,6 @@ export default function ThemesPage() {
 
 
 
-  const handleCreateMaterial = async () => {
-    if (!openMaterialDialogFor || !newMaterial.name || !newMaterial.type) return;
-
-    const formData = new FormData();
-    formData.append('theme_id', openMaterialDialogFor);
-    formData.append('type', newMaterial.type);
-    formData.append('title', newMaterial.name);
-    if (newMaterial.description) formData.append('description', newMaterial.description);
-    if (newMaterial.url && newMaterial.type !== 'pdf') formData.append('content', newMaterial.url);
-    if (newMaterial.file) formData.append('file', newMaterial.file);
-
-    const token = localStorage.getItem('access_token');
-    try {
-      const res = await fetch('http://localhost:3000/theme-materials', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      await res.json();
-      if (res.ok) {
-        enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
-        fetchMaterials(openMaterialDialogFor);
-        setOpenMaterialDialogFor(null);
-        setTimeout(() => setNewMaterial({}), 100);
-      } else {
-        throw new Error();
-      }
-    } catch (err) {
-      console.error('Erro ao salvar material:', err);
-      enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
-    }
-  };
 
   const handleDeleteMaterialClick = (materialId: string) => {
     setMaterialToDelete(materialId);
@@ -349,15 +317,24 @@ export default function ThemesPage() {
       />
 
 
-
       <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1000 }}>
         <IconButton onClick={() => navigate(`/home/turmas/editar/${classId}`)} sx={{ bgcolor: '#e0e0e0', '&:hover': { bgcolor: '#d5d5d5' }, width: 56, height: 56, boxShadow: 3 }}>
           <ArrowBack />
         </IconButton>
 
-        <IconButton onClick={() => setOpenDialog(true)} sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' }, width: 56, height: 56, boxShadow: 3 }}>
+        <IconButton
+          onClick={() => {
+            setEditandoTemaId(null); 
+            setNewTitle('');
+            setNewDescription('');
+            setNewOrder('');
+            setOpenDialog(true);
+          }}
+          sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' }, width: 56, height: 56, boxShadow: 3 }}
+        >
           <Add />
         </IconButton>
+
       </Box>
 
       <ThemeFormDialog
@@ -370,9 +347,11 @@ export default function ThemesPage() {
         isEditing={!!editandoTemaId}
         initialData={
           editandoTemaId
-            ? { title: newTitle, description: newDescription, order: Number(newOrder) }
+            ? themes.find((t) => t.id === editandoTemaId)
             : undefined
         }
+
+
         title={newTitle}
         setTitle={setNewTitle}
         description={newDescription}

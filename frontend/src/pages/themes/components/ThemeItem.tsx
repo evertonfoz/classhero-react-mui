@@ -54,6 +54,7 @@ export default function ThemeItem({
             <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
               <Delete fontSize="small" />
             </IconButton>
+            
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
               {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </IconButton>

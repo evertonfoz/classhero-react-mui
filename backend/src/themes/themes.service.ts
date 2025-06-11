@@ -74,7 +74,6 @@ export class ThemesService {
 
 
   async updateTheme(id: string, dto: UpdateThemeDto) {
-    console.log('Atualizando tema:', id, dto);
     const { data, error } = await this.supabase
       .from('themes')
       .update({
