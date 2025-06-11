@@ -13,12 +13,13 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ArrowBack, Add } from '@mui/icons-material';
+import { ArrowBack, Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import MaterialFormDialog from './components/MaterialFormDialog';
 import ThemeItem from './components/ThemeItem';
 import type { Material } from '../../types/material';
 import ThemeFormDialog from './components/ThemeFormDialog';
+import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
 
 
 interface Theme {
@@ -426,18 +427,21 @@ export default function ThemesPage() {
         }}
       />
 
-      <Dialog open={confirmDeleteThemeOpen} onClose={() => setConfirmDeleteThemeOpen(false)}>
-        <DialogTitle>Confirmar exclusão do tema</DialogTitle>
-        <DialogContent>
-          <Typography>Tem certeza que deseja excluir este tema?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDeleteThemeOpen(false)}>Cancelar</Button>
-          <Button onClick={confirmDeleteTheme} color="error" variant="contained">
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={confirmDeleteThemeOpen}
+        onClose={() => setConfirmDeleteThemeOpen(false)}
+        onConfirm={confirmDeleteTheme}
+        title={
+          <>
+            <Delete color="error" />
+            Confirmar exclusão do tema
+          </>
+        }
+        message="Tem certeza que deseja excluir este tema?"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        confirmColor="error"
+      />
 
     </Box>
   );
