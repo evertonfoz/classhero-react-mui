@@ -71,7 +71,7 @@ export class ThemeMaterialsService {
           description: dto.description,
           type: dto.type,
           content: finalUrl,
-          order: Number(dto.order), 
+          order: Number(dto.order),
         },
       ])
       .select()
@@ -124,7 +124,7 @@ export class ThemeMaterialsService {
               /^\/storage\/v1\/object\/public\/classhero_bucket\//,
               '',
             );
-          } catch {}
+          } catch { }
         }
 
         if (!dto.type) {
@@ -188,11 +188,14 @@ export class ThemeMaterialsService {
     // 2. Extrair o path do arquivo (ex: "materials/pdfs/arquivo.pdf")
     let filePath = '';
     try {
-      const content = JSON.parse(material.content);
-      filePath = new URL(content.publicUrl).pathname.replace(/^\/storage\/v1\/object\/public\/classhero_bucket\//, '');
+      filePath = new URL(material.content).pathname.replace(
+        /^\/storage\/v1\/object\/public\/classhero_bucket\//,
+        '',
+      );
     } catch (e) {
-      console.warn('Erro ao extrair path do conteúdo', e);
+      console.warn('Erro ao extrair path direto do conteúdo', e);
     }
+
 
     // 3. Remover do banco de dados
     const { error: deleteError } = await this.supabase

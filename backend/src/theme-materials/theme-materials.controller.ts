@@ -20,9 +20,6 @@ export class ThemeMaterialsController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async create(@Body() body: any, @UploadedFile() file?: Express.Multer.File) {
-    console.log('Body recebido:', body);
-    console.log('Arquivo recebido:', file?.originalname);
-
     // Transforma e valida
     const dto = plainToInstance(CreateThemeMaterialDto, body);
     try {
