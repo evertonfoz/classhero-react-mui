@@ -77,6 +77,19 @@ export default function ThemeFormDialog({
     }
   }, [title, description, order, isEditing, initialData]);
 
+  const handleCancel = () => {
+    if (isEditing && initialData) {
+      setTitle(initialData.title);
+      setDescription(initialData.description);
+      setOrder(initialData.order);
+    } else {
+      setTitle('');
+      setDescription('');
+      setOrder('');
+    }
+    setHasChanges(false);
+  };
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{isEditing ? 'Editar Tema' : 'Novo Tema'}</DialogTitle>
@@ -115,7 +128,7 @@ export default function ThemeFormDialog({
       <DialogActions>
         {hasChanges ? (
           <>
-            <Button onClick={onClose}>Cancelar</Button>
+            <Button onClick={handleCancel}>Cancelar</Button>
             <Button
               onClick={onSubmit}
               disabled={!isValid}
