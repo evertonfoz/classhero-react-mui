@@ -362,22 +362,21 @@ export default function ThemesPage() {
 
 
 
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Confirmar exclusão</DialogTitle>
-        <DialogContent>
-          <Typography>Deseja realmente excluir este material?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
-          <Button
-            onClick={() => materialToDelete && confirmDeleteMaterial(materialToDelete)}
-            color="error"
-            variant="contained"
-          >
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => materialToDelete && confirmDeleteMaterial(materialToDelete)}
+        title={
+          <>
+            <Delete color="error" />
+            Confirmar exclusão
+          </>
+        }
+        message="Deseja realmente excluir este material?"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        confirmColor="error"
+      />
 
 
       <MaterialFormDialog
