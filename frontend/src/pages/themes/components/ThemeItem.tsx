@@ -123,7 +123,7 @@ export default function ThemeItem({
                     </Typography>
                   )}
                   <Box mt={1}>
-                    <IconButton size="small" onClick={() => onEditMaterial(m)}>
+                    <IconButton size="small" onClick={() => onEditMaterial({ ...m, theme_id: themeId })}>
                       <Edit fontSize="small" />
                     </IconButton>
                     <IconButton

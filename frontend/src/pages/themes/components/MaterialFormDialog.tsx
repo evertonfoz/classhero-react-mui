@@ -19,6 +19,15 @@ interface MaterialFormDialogProps {
   onClose: () => void;
   themeId: string | null;
   onSuccess: () => void;
+  isEditing?: boolean;
+  initialData?: {
+    material_id: string;
+    name: string;
+    description?: string;
+    type: string;
+    content?: string;
+    order: number;
+  };
 }
 
 interface MaterialForm {
@@ -30,7 +39,7 @@ interface MaterialForm {
   order: string;
 }
 
-export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }: MaterialFormDialogProps) {
+export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, isEditing = false, initialData }: MaterialFormDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [material, setMaterial] = useState<MaterialForm>({
@@ -42,17 +51,28 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
     order: '',
   });
 
+  const [originalData, setOriginalData] = useState<MaterialForm | null>(null);
+
   const hasAnyValue = Object.values(material).some((value) => {
     if (typeof value === 'string') return value.trim() !== '';
     if (value instanceof File) return true;
     return false;
   });
 
+  const hasChanges = isEditing
+    ? originalData &&
+      (material.name !== originalData.name ||
+        material.description !== originalData.description ||
+        material.type !== originalData.type ||
+        material.url !== originalData.url ||
+        material.order !== originalData.order)
+    : hasAnyValue;
+
   const isFormValid =
     material.name.trim() !== '' &&
     material.type !== '' &&
     material.order.trim() !== '' &&
-    (material.type !== 'pdf' || material.file);
+    (isEditing ? true : material.type !== 'pdf' || material.file);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,29 +82,50 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
   };
 
   const handleSubmit = async () => {
-    if (!themeId || !isFormValid) return;
-
-    const formData = new FormData();
-    formData.append('theme_id', themeId);
-    formData.append('type', material.type);
-    formData.append('title', material.name);
-    formData.append('description', material.description);
-    formData.append('order', material.order);
-    if (material.type !== 'pdf') formData.append('content', material.url);
-    if (material.file) formData.append('file', material.file);
+    if (!isFormValid) return;
 
     const token = localStorage.getItem('access_token');
 
     try {
-      const res = await fetch('http://localhost:3000/theme-materials', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      if (isEditing && initialData) {
+        const payload = {
+          title: material.name,
+          description: material.description,
+          type: material.type,
+          content: material.type !== 'pdf' ? material.url : initialData.content,
+        };
 
-      if (!res.ok) throw new Error();
+        const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        });
 
-      enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
+        if (!res.ok) throw new Error();
+
+        enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+      } else {
+        if (!themeId) return;
+        const formData = new FormData();
+        formData.append('theme_id', themeId);
+        formData.append('type', material.type);
+        formData.append('title', material.name);
+        formData.append('description', material.description);
+        formData.append('order', material.order);
+        if (material.type !== 'pdf') formData.append('content', material.url);
+        if (material.file) formData.append('file', material.file);
+
+        const res = await fetch('http://localhost:3000/theme-materials', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error();
+
+        enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
+      }
+
       onSuccess();
       setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
     } catch {
@@ -93,10 +134,24 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
   };
 
   useEffect(() => {
-    if (!open) {
-      setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
+    if (!open) return;
+
+    if (isEditing && initialData) {
+      const data = {
+        name: initialData.name,
+        description: initialData.description || '',
+        type: initialData.type,
+        url: initialData.content || '',
+        order: initialData.order.toString(),
+      } as MaterialForm;
+      setMaterial({ ...data, file: undefined });
+      setOriginalData({ ...data, file: undefined });
+    } else {
+      const empty = { name: '', description: '', type: '', url: '', file: undefined, order: '' };
+      setMaterial(empty);
+      setOriginalData(empty);
     }
-  }, [open]);
+  }, [open, isEditing, initialData]);
 
   return (
     <Dialog
@@ -106,7 +161,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Novo Material</DialogTitle>
+      <DialogTitle>{isEditing ? 'Editar Material' : 'Novo Material'}</DialogTitle>
       <DialogContent>
 
         {/* ORDEM NO TOPO */}
@@ -193,20 +248,24 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
       </DialogContent>
 
       <DialogActions>
-        {!hasAnyValue ? (
+        {!hasChanges ? (
           <Button onClick={onClose}>Fechar</Button>
         ) : (
           <>
             <Button
               onClick={() => {
-                setMaterial({
-                  name: '',
-                  description: '',
-                  type: '',
-                  url: '',
-                  file: undefined,
-                  order: '',
-                });
+                if (isEditing && originalData) {
+                  setMaterial({ ...originalData });
+                } else {
+                  setMaterial({
+                    name: '',
+                    description: '',
+                    type: '',
+                    url: '',
+                    file: undefined,
+                    order: '',
+                  });
+                }
               }}
             >
               Cancelar
