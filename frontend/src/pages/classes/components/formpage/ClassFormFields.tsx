@@ -1,5 +1,16 @@
-import { Box, TextField, Autocomplete, CircularProgress, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Autocomplete,
+  CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Button,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface DisciplineOption {
   discipline_id: string;
@@ -19,6 +30,7 @@ interface StudentOption {
 interface SelectedDiscipline {
   discipline: DisciplineOption;
   teacher?: TeacherOption | null;
+  class_discipline_id?: string;
 }
 
 interface Props {
@@ -36,6 +48,7 @@ interface Props {
   setTeacherOptions: (v: TeacherOption[]) => void;
   studentOptions: StudentOption[];
   setStudentOptions: (v: StudentOption[]) => void;
+  nomeInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export default function ClassFormFields({
@@ -53,6 +66,7 @@ export default function ClassFormFields({
   setTeacherOptions,
   studentOptions,
   setStudentOptions,
+  nomeInputRef ,
 }: Props) {
   const [disciplineOptions, setDisciplineOptions] = useState<DisciplineOption[]>([]);
   const [loadingDisciplines, setLoadingDisciplines] = useState(false);
@@ -60,14 +74,17 @@ export default function ClassFormFields({
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchDis, setSearchDis] = useState('');
   const [searchStu, setSearchStu] = useState('');
+  const navigate = useNavigate();
+  const { id: classId } = useParams(); // <- "id" vem de /turmas/editar/:id
 
   useEffect(() => {
     const fetchDisciplines = async () => {
       setLoadingDisciplines(true);
       try {
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`http://localhost:3000/disciplines/search?q=${searchDis}`,
-          { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch(`http://localhost:3000/disciplines/search?q=${searchDis}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await response.json();
         setDisciplineOptions(data);
       } catch {
@@ -84,8 +101,9 @@ export default function ClassFormFields({
       setLoadingTeachers(true);
       try {
         const token = localStorage.getItem('access_token');
-        const res = await fetch('http://localhost:3000/users/all?is_a_teacher=true',
-          { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('http://localhost:3000/users/all?is_a_teacher=true', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const { data } = await res.json();
         setTeacherOptions(data);
       } catch {
@@ -102,8 +120,12 @@ export default function ClassFormFields({
       setLoadingStudents(true);
       try {
         const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://localhost:3000/users/all?is_a_student=true&search=${searchStu}`,
-          { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(
+          `http://localhost:3000/users/all?is_a_student=true&search=${searchStu}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const { data } = await res.json();
         setStudentOptions(data);
       } catch {
@@ -131,12 +153,14 @@ export default function ClassFormFields({
 
   return (
     <Box display="flex" flexDirection="column" gap={2} mb={3} width="100%">
+      {/* Código, ano, semestre */}
       <Box display="flex" gap={2}>
         <TextField
           label="Código"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           fullWidth
+        inputRef={nomeInputRef}
           inputProps={{ style: { textTransform: 'uppercase' } }}
         />
 
@@ -156,6 +180,7 @@ export default function ClassFormFields({
         />
       </Box>
 
+      {/* Disciplinas */}
       <Autocomplete
         multiple
         options={disciplineOptions}
@@ -175,41 +200,65 @@ export default function ClassFormFields({
             InputProps={{
               ...params.InputProps,
               endAdornment: (
-                <>{loadingDisciplines ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>
+                <>
+                  {loadingDisciplines ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
               ),
             }}
           />
         )}
       />
 
+      {/* Professores por disciplina + botão de temas */}
       {disciplines.map((sd, i) => (
-        <FormControl fullWidth key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
-          <InputLabel>Professor para {sd.discipline.name}</InputLabel>
-          <Select
-            value={
-              teacherOptions.some((t) => t.email === sd.teacher?.email)
-                ? sd.teacher?.email
-                : ''
-            }
-            label={`Professor para ${sd.discipline.name}`}
-            onChange={(e) => {
-              const teacher = teacherOptions.find((t) => t.email === e.target.value);
-              handleTeacherSelect(i, teacher || null);
-            }}
-          >
-            <MenuItem value="">
-              <em>Nenhum</em>
-            </MenuItem>
-            {teacherOptions.map((t) => (
-              <MenuItem key={t.email} value={t.email}>
-                {t.name}
+        <Box key={sd.discipline.discipline_id} sx={{ mt: 1 }}>
+          <FormControl fullWidth>
+            <InputLabel>Professor para {sd.discipline.name}</InputLabel>
+            <Select
+              value={
+                teacherOptions.some((t) => t.email === sd.teacher?.email)
+                  ? sd.teacher?.email
+                  : ''
+              }
+              label={`Professor para ${sd.discipline.name}`}
+              onChange={(e) => {
+                const teacher = teacherOptions.find((t) => t.email === e.target.value);
+                handleTeacherSelect(i, teacher || null);
+              }}
+            >
+              <MenuItem value="">
+                <em>Nenhum</em>
               </MenuItem>
-            ))}
-          </Select>
-
-        </FormControl>
+              {teacherOptions.map((t) => (
+                <MenuItem key={t.email} value={t.email}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {sd.teacher && sd.class_discipline_id && classId && (
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{ mt: 1 }}
+              onClick={() =>
+                navigate(`/home/turmas/${classId}/disciplinas/${sd.class_discipline_id}/temas`, {
+                  state: {
+                    disciplineName: sd.discipline.name,
+                    teacherName: sd.teacher?.name || '',
+                    classCode: code
+                  }
+                })
+              }
+            >
+              Gerenciar Temas
+            </Button>
+          )}
+        </Box>
       ))}
 
+      {/* Alunos */}
       <Autocomplete
         multiple
         options={studentOptions}
@@ -229,7 +278,10 @@ export default function ClassFormFields({
             InputProps={{
               ...params.InputProps,
               endAdornment: (
-                <>{loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>
+                <>
+                  {loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
               ),
             }}
           />

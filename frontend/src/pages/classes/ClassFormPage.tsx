@@ -1,14 +1,16 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, IconButton, Typography } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import SuccessDialog from '../../components/ui/SuccessDialog';
 import ClassFormFields from './components/formpage/ClassFormFields';
+import { ArrowBack } from '@mui/icons-material';
 
 interface SelectedDiscipline {
   discipline: { discipline_id: string; name: string };
   teacher?: { email: string; name: string } | null;
+  class_discipline_id?: string;
 }
 
 interface StudentOption {
@@ -45,6 +47,17 @@ export default function ClassFormPage() {
 
   const hasDisciplineWithTeacher = disciplines.some(d => d.teacher && d.teacher.email);
 
+  const nomeInputRef = useRef<HTMLInputElement>(null);
+
+  const [novaTurmaId, setNovaTurmaId] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    if (nomeInputRef.current) {
+      nomeInputRef.current.focus();
+    }
+  }, []);
+
   useEffect(() => {
     const modified =
       code.trim() !== origCode.trim() ||
@@ -71,6 +84,10 @@ export default function ClassFormPage() {
       setStudents([]);
     }
     setFormModified(false);
+
+    setTimeout(() => {
+      nomeInputRef.current?.focus();
+    }, 100);
   };
 
   useEffect(() => {
@@ -92,7 +109,8 @@ export default function ClassFormPage() {
             return {
               discipline: { discipline_id: cd.discipline_id, name: cd.name },
               teacher: cd.teacher_email ? { email: cd.teacher_email, name: cd.teacher_name } : null,
-            };
+              class_discipline_id: cd.class_discipline_id,
+            } as SelectedDiscipline;
           });
 
           const updatedStudents: StudentOption[] = [];
@@ -154,6 +172,8 @@ export default function ClassFormPage() {
         enqueueSnackbar('Turma atualizada com sucesso!', { variant: 'success' });
         navigate('/home/turmas');
       } else {
+        console.log(result);
+        setNovaTurmaId(result.class_id);
         setDialogOpen(true);
       }
     } catch (err: any) {
@@ -166,6 +186,8 @@ export default function ClassFormPage() {
       <Typography variant="h6" fontWeight="bold" gutterBottom>
         {isEditMode ? 'Editar Turma' : 'Nova Turma'}
       </Typography>
+
+      <br />
 
       <ClassFormFields
         code={code}
@@ -182,6 +204,7 @@ export default function ClassFormPage() {
         setTeacherOptions={setTeacherOptions}
         studentOptions={studentOptions}
         setStudentOptions={setStudentOptions}
+        nomeInputRef={nomeInputRef}
       />
 
       <Box display="flex" gap={2}>
@@ -203,15 +226,49 @@ export default function ClassFormPage() {
         </Button>
       </Box>
 
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 32, // acima do botão de adicionar
+          right: 24,
+          zIndex: 1000,
+        }}
+      >
+        <IconButton
+          onClick={() => navigate('/home/turmas')}
+          sx={{
+            bgcolor: '#e0e0e0',
+            '&:hover': { bgcolor: '#d5d5d5' },
+            width: 56,
+            height: 56,
+            boxShadow: 3,
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
       <SuccessDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         title="Turma cadastrada com sucesso!"
         question="Deseja cadastrar outra turma?"
-        onFinalize={() => navigate('/home/turmas')}
+        onFinalize={() => {
+           setDialogOpen(false);
+          setTimeout(() => {
+            if (novaTurmaId) {
+              navigate(`/home/turmas/editar/${novaTurmaId}`);
+            } else {
+              navigate('/home/turmas');
+            }
+          }, 100); 
+        }}
         onAgain={() => {
           handleReset();
           setDialogOpen(false);
+          setTimeout(() => {
+            nomeInputRef.current?.focus();
+          }, 100);
         }}
       />
     </PageContainer>

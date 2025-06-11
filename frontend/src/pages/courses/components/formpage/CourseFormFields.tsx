@@ -7,6 +7,7 @@ interface Props {
   setNome: (value: string) => void;
   setSigla: (value: string) => void;
   setAtivo: (value: boolean) => void;
+  nomeInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export default function CourseFormFields({
@@ -16,6 +17,7 @@ export default function CourseFormFields({
   setNome,
   setSigla,
   setAtivo,
+  nomeInputRef ,
 }: Props) {
   return (
     <>
@@ -30,6 +32,7 @@ export default function CourseFormFields({
           setNome(formatado);
         }}
         sx={{ mb: 2 }}
+        inputRef={nomeInputRef}
       />
 
       <Box display="flex" alignItems="center" width="100%" gap={2} sx={{ mb: 3 }}>

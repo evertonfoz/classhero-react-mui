@@ -1,15 +1,17 @@
 import {
     Box,
     Button,
+    IconButton,
     Typography,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import SuccessDialog from '../../components/ui/SuccessDialog';
 import { useParams } from 'react-router-dom';
 import CourseFormFields from './components/formpage/CourseFormFields';
+import { ArrowBack } from '@mui/icons-material';
 
 
 export default function CourseFormPage() {
@@ -28,7 +30,13 @@ export default function CourseFormPage() {
     const [originalSigla, setOriginalSigla] = useState('');
     const [originalAtivo, setOriginalAtivo] = useState(true);
 
+    const nomeInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (nomeInputRef.current) {
+            nomeInputRef.current.focus();
+        }
+    }, []);
 
     useEffect(() => {
         const foiModificado =
@@ -51,6 +59,10 @@ export default function CourseFormPage() {
             setAtivo(true);
         }
         setFormModified(false);
+
+        setTimeout(() => {
+            nomeInputRef.current?.focus();
+        }, 100);
     };
 
 
@@ -126,6 +138,7 @@ export default function CourseFormPage() {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Novo Curso
             </Typography>
+            <br />
 
             <CourseFormFields
                 nome={nome}
@@ -134,6 +147,7 @@ export default function CourseFormPage() {
                 setNome={setNome}
                 setSigla={setSigla}
                 setAtivo={setAtivo}
+                nomeInputRef={nomeInputRef}
             />
 
             <Box display="flex" gap={2}>
@@ -152,10 +166,30 @@ export default function CourseFormPage() {
                 >
                     {isEditMode ? 'Salvar Alterações' : 'Cadastrar'}
                 </Button>
-
-
-
             </Box>
+
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 32, // acima do botão de adicionar
+                    right: 24,
+                    zIndex: 1000,
+                }}
+            >
+                <IconButton
+                    onClick={() => navigate('/home/cursos')}
+                    sx={{
+                        bgcolor: '#e0e0e0',
+                        '&:hover': { bgcolor: '#d5d5d5' },
+                        width: 56,
+                        height: 56,
+                        boxShadow: 3,
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+            </Box>
+
 
             <SuccessDialog
                 open={dialogOpen}
@@ -166,6 +200,9 @@ export default function CourseFormPage() {
                 onAgain={() => {
                     handleReset();
                     setDialogOpen(false);
+                    setTimeout(() => {
+                        nomeInputRef.current?.focus();
+                    }, 100);
                 }}
             />
 

@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { CoursesModule } from './courses/courses.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
 import { ClassesModule } from './classes/classes.module';
+import { ThemesModule } from './themes/themes.module';
+import { ThemeMaterialsModule } from './theme-materials/theme-materials.module';
 
 
 @Module({
@@ -17,7 +19,9 @@ import { ClassesModule } from './classes/classes.module';
     UsersModule,
     CoursesModule,
     DisciplinesModule,
-    ClassesModule
+    ClassesModule,
+    ThemesModule,
+    ThemeMaterialsModule
   ],
   controllers: [AppController],
   providers: [AppService],
