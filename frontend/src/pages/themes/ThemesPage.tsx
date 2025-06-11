@@ -2,7 +2,6 @@ import {
   Box,
   Typography,
   IconButton,
-  List,
   Divider,
   Stack,
   Dialog,
@@ -16,10 +15,10 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowBack, Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import MaterialFormDialog from './components/MaterialFormDialog';
-import ThemeItem from './components/ThemeItem';
 import type { Material } from '../../types/material';
 import ThemeFormDialog from './components/ThemeFormDialog';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
+import ThemesList from './components/ThemesList';
 
 
 interface Theme {
@@ -76,21 +75,19 @@ export default function ThemesPage() {
   };
 
 
-  const confirmDeleteTheme = async () => {
-    console.log('Confirmando exclusão do tema:', themeToDelete);
-    if (!themeToDelete) return;
-
+  const confirmDeleteTheme = async (id: string) => {
+    console.log('Confirmando exclusão do tema:', id);
     const token = localStorage.getItem('access_token');
 
     try {
-      const res = await fetch(`http://localhost:3000/themes/${themeToDelete}`, {
+      const res = await fetch(`http://localhost:3000/themes/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
         enqueueSnackbar('Tema excluído com sucesso.', { variant: 'success' });
-        setThemes((prev) => prev.filter((t) => t.id !== themeToDelete));
+        setThemes((prev) => prev.filter((t) => t.id !== id));
       } else {
         const json = await res.json();
         enqueueSnackbar(json.message || 'Erro ao excluir tema.', { variant: 'error' });
@@ -103,6 +100,7 @@ export default function ThemesPage() {
       setThemeToDelete(null);
     }
   };
+
 
 
   const onDeleteThemeClick = (themeId: string) => {
@@ -214,6 +212,7 @@ export default function ThemesPage() {
   };
 
   const handleSalvarTema = async () => {
+    console.log(editandoTemaId);
     const token = localStorage.getItem('access_token');
     const url = editandoTemaId
       ? `http://localhost:3000/themes/${editandoTemaId}`
@@ -225,8 +224,6 @@ export default function ThemesPage() {
       order: Number(newOrder),
       ...(editandoTemaId ? {} : { class_discipline_id: classDisciplineId }),
     };
-
-    console.log('Salvando tema:', payload);
 
     try {
       const res = await fetch(url, {
@@ -339,37 +336,18 @@ export default function ThemesPage() {
       </Stack>
       <Divider sx={{ mb: 2 }} />
 
-      <List>
-        {themes.map((t, index) => (
-          <ThemeItem
-            key={t.id}
-            themeId={t.id}
-            title={t.title}
-            description={t.description}
-            expanded={expandedThemeId === t.id}
-            materials={materialsMap[t.id] || []}
-            onExpand={handleExpand}
-            onOpenMaterialDialog={setOpenMaterialDialogFor}
-            zebraIndex={index}
-            onEditMaterial={handleEditMaterial}
-            handleDeleteMaterialClick={handleDeleteMaterialClick}
-            onDeleteThemeClick={onDeleteThemeClick}
-            order={t.order}
-            onEditTheme={handleEditTheme}
-          />
-        ))}
-      </List>
+      <ThemesList
+        themes={themes}
+        expandedThemeId={expandedThemeId}
+        materialsMap={materialsMap}
+        onExpand={handleExpand}
+        onOpenMaterialDialog={setOpenMaterialDialogFor}
+        onEditMaterial={handleEditMaterial}
+        onDeleteMaterial={handleDeleteMaterialClick}
+        onDeleteThemeClick={onDeleteThemeClick}
+        onEditTheme={handleEditTheme}
+      />
 
-      {themes.length === 0 && (
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          textAlign="center"
-          mt={0}
-        >
-          Nenhum tema cadastrado ainda. Clique no botão <strong>+</strong> para adicionar o primeiro tema.
-        </Typography>
-      )}
 
 
       <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 1000 }}>
@@ -383,7 +361,6 @@ export default function ThemesPage() {
       </Box>
 
       <ThemeFormDialog
-      
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
@@ -396,7 +373,14 @@ export default function ThemesPage() {
             ? { title: newTitle, description: newDescription, order: Number(newOrder) }
             : undefined
         }
+        title={newTitle}
+        setTitle={setNewTitle}
+        description={newDescription}
+        setDescription={setNewDescription}
+        order={newOrder}
+        setOrder={setNewOrder}
       />
+
 
 
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
@@ -430,7 +414,7 @@ export default function ThemesPage() {
       <ConfirmationDialog
         open={confirmDeleteThemeOpen}
         onClose={() => setConfirmDeleteThemeOpen(false)}
-        onConfirm={confirmDeleteTheme}
+        onConfirm={() => themeToDelete && confirmDeleteTheme(themeToDelete)}
         title={
           <>
             <Delete color="error" />
