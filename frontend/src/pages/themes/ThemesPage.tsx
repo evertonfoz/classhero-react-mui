@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -19,6 +18,7 @@ import { useSnackbar } from 'notistack';
 import MaterialFormDialog from './components/MaterialFormDialog';
 import ThemeItem from './components/ThemeItem';
 import type { Material } from '../../types/material';
+import ThemeFormDialog from './components/ThemeFormDialog';
 
 
 interface Theme {
@@ -51,6 +51,8 @@ export default function ThemesPage() {
 
   const [newOrder, setNewOrder] = useState<number | ''>('');
 
+  const [editandoTemaId, setEditandoTemaId] = useState<string | null>(null);
+  const [dialogEditTemaOpen, setDialogEditTemaOpen] = useState(false);
 
 
   const fetchThemes = async () => {
@@ -134,6 +136,18 @@ export default function ThemesPage() {
   };
 
 
+  const handleEditTheme = (id: string) => {
+    const tema = themes.find((t) => t.id === id);
+    if (!tema) return;
+
+    setEditandoTemaId(id);
+    setNewTitle(tema.title);
+    setNewDescription(tema.description);
+    setNewOrder(tema.order);
+    setOpenDialog(true);
+  };
+
+
   const handleEditMaterial = (material: Material) => {
     setOpenMaterialDialogFor(material.material_id); // ou tema atual
     setNewMaterial(material); // pré-carrega os campos no dialog
@@ -189,55 +203,79 @@ export default function ThemesPage() {
     }
   };
 
-  const handleCreateTheme = async () => {
+  const handleSalvarTema = async () => {
     const token = localStorage.getItem('access_token');
+    const url = editandoTemaId
+      ? `http://localhost:3000/themes/${editandoTemaId}`
+      : 'http://localhost:3000/themes';
 
+    const payload = {
+      title: newTitle,
+      description: newDescription,
+      order: Number(newOrder),
+      ...(editandoTemaId ? {} : { class_discipline_id: classDisciplineId }),
+    };
 
     try {
-      const res = await fetch('http://localhost:3000/themes', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method: editandoTemaId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          title: newTitle,
-          description: newDescription,
-          class_discipline_id: classDisciplineId,
-          order: Number(newOrder)
-
-        }),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
 
       if (res.ok) {
         const { data } = json;
-        setThemes((prev) => [
-          ...prev,
-          {
-            id: data.theme_id,
-            title: data.title,
-            description: data.description,
-            order: data.order,
-          },
-        ]);
-        setOpenDialog(false);
-        setNewTitle('');
-        setNewDescription('');
-        enqueueSnackbar('Tema criado com sucesso.', { variant: 'success' });
-      } else {
-        if (json.message.includes('ordem')) {
-          enqueueSnackbar('Você já cadastrou um tema com essa ordem para essa disciplina. Escolha outro número.', { variant: 'warning' });
+
+        if (editandoTemaId) {
+          // Atualiza tema existente
+          setThemes((prev) =>
+            prev.map((t) =>
+              t.id === editandoTemaId
+                ? { id: data.theme_id, title: data.title, description: data.description, order: data.order }
+                : t
+            )
+          );
+          enqueueSnackbar('Tema atualizado com sucesso.', { variant: 'success' });
         } else {
-          enqueueSnackbar(json.message, { variant: 'error' });
+          // Adiciona novo tema
+          setThemes((prev) => [
+            ...prev,
+            {
+              id: data.theme_id,
+              title: data.title,
+              description: data.description,
+              order: data.order,
+            },
+          ]);
+          enqueueSnackbar('Tema criado com sucesso.', { variant: 'success' });
         }
 
+        // Limpa estado
+        setOpenDialog(false);
+        setEditandoTemaId(null);
+        setNewTitle('');
+        setNewDescription('');
+        setNewOrder('');
+      } else {
+        if (json.message?.toLowerCase().includes('ordem')) {
+          enqueueSnackbar(
+            'Você já cadastrou um tema com essa ordem para essa disciplina. Escolha outro número.',
+            { variant: 'warning' }
+          );
+        } else {
+          enqueueSnackbar(json.message || 'Erro ao salvar tema.', { variant: 'error' });
+        }
       }
     } catch (err: any) {
-        enqueueSnackbar(err?.message, { variant: 'error' });
+      enqueueSnackbar(err?.message || 'Erro ao salvar tema.', { variant: 'error' });
     }
   };
+
 
 
   const handleCreateMaterial = async () => {
@@ -304,7 +342,7 @@ export default function ThemesPage() {
             handleDeleteMaterialClick={handleDeleteMaterialClick}
             onDeleteThemeClick={onDeleteThemeClick}
             order={t.order}
-
+            onEditTheme={handleEditTheme}
           />
         ))}
       </List>
@@ -331,43 +369,26 @@ export default function ThemesPage() {
         </IconButton>
       </Box>
 
-      <Dialog open={openDialog} onClose={() => { }} fullWidth maxWidth="sm">
-        <DialogTitle>Novo Tema</DialogTitle>
-        <DialogContent sx={{ mt: 1 }}>
-          <Box pt={1}>
-            <TextField
-              label="Ordem"
-              type="number"
-              value={newOrder}
-              onChange={(e) => setNewOrder(e.target.value === '' ? '' : Number(e.target.value))}
-              fullWidth
-              margin="normal"
-            />
+      <ThemeFormDialog
+        open={openDialog}
+        onClose={() => {
+          setOpenDialog(false);
+          setEditandoTemaId(null);
+        }}
+        onSubmit={({ title, description, order }) => {
+          setNewTitle(title);
+          setNewDescription(description);
+          setNewOrder(order);
+          handleSalvarTema();
+        }}
+        isEditing={!!editandoTemaId}
+        initialData={
+          editandoTemaId
+            ? { title: newTitle, description: newDescription, order: Number(newOrder) }
+            : undefined
+        }
+      />
 
-            <TextField label="Título" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} fullWidth autoFocus margin="normal" />
-            <TextField label="Descrição" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} multiline rows={4} fullWidth margin="normal" />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          {newTitle || newDescription ? (
-            <>
-              <Button onClick={() => { setNewTitle(''); setNewDescription(''); }}>Cancelar</Button>
-              <Button
-                onClick={handleCreateTheme}
-                disabled={
-                  !newTitle.trim() || !newDescription.trim() || newOrder === '' || isNaN(Number(newOrder))
-                }
-                variant="contained"
-              >
-                Salvar
-              </Button>
-
-            </>
-          ) : (
-            <Button onClick={() => setOpenDialog(false)}>Fechar</Button>
-          )}
-        </DialogActions>
-      </Dialog>
 
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Confirmar exclusão</DialogTitle>

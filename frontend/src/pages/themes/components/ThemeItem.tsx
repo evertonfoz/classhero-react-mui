@@ -20,12 +20,13 @@ interface ThemeItemProps {
   zebraIndex: number;
   onEditMaterial: (material: Material) => void;
   handleDeleteMaterialClick: (materialId: string) => void;
+  onEditTheme: (themeId: string) => void;
 
 }
 
 export default function ThemeItem({
   themeId, title, description, expanded, zebraIndex, order,
-  materials, onExpand, onDeleteThemeClick, onOpenMaterialDialog, handleDeleteMaterialClick, onEditMaterial
+  materials, onExpand, onDeleteThemeClick, onOpenMaterialDialog, handleDeleteMaterialClick, onEditMaterial, onEditTheme
 }: ThemeItemProps) {
   return (
     <Box key={themeId} bgcolor={zebraIndex % 2 === 0 ? '#fafafa' : '#ffffff'}>
@@ -46,9 +47,13 @@ export default function ThemeItem({
             alignItems="flex-start"
             sx={{ mt: '4px' }}
           >
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditMaterial({ material_id: themeId } as any); }}>
+            <IconButton onClick={() => onEditTheme(themeId)}>
               <Edit fontSize="small" />
             </IconButton>
+
+            {/* <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditTheme({ theme_id: themeId } as any); }}>
+              <Edit fontSize="small" />
+            </IconButton> */}
             <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
               <Delete fontSize="small" />
             </IconButton>
@@ -59,7 +64,8 @@ export default function ThemeItem({
         }
       >
         {/* Número rotacionado */}
-        <Box
+        <Box width={48}
+  // height={80}
           sx={{
             writingMode: 'vertical-rl',
             transform: 'rotate(180deg)',
@@ -88,9 +94,6 @@ export default function ThemeItem({
           />
         </Box>
       </ListItem>
-
-
-
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Box px={4} py={2} bgcolor="#ffffff">
