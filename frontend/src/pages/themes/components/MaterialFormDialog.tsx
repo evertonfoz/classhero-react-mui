@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import { Stack } from '@mui/material';
 
 interface MaterialFormDialogProps {
   open: boolean;
@@ -83,14 +82,14 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
   const hasChanges = isEditing
     ?
-        originalData &&
-        (material.name !== originalData.name ||
-          material.description !== originalData.description ||
-          material.type !== originalData.type ||
-          material.url !== originalData.url ||
-          material.order !== originalData.order ||
-          !!material.file ||
-          removeExistingFile)
+    originalData &&
+    (material.name !== originalData.name ||
+      material.description !== originalData.description ||
+      material.type !== originalData.type ||
+      material.url !== originalData.url ||
+      material.order !== originalData.order ||
+      !!material.file ||
+      removeExistingFile)
     : hasAnyValue;
 
   const isFormValid =
@@ -100,8 +99,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
     (material.type !== 'pdf'
       ? true
       : isEditing
-      ? !removeExistingFile || !!material.file
-      : !!material.file);
+        ? !removeExistingFile || !!material.file
+        : !!material.file);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -286,36 +285,28 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
         {material.type === 'pdf' && (
           <>
-            {material.file ? (
+            {/* Mostra o nome do arquivo selecionado OU nome do anterior se estiver em edição */}
+            {(material.file || material.url) && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
-                Arquivo selecionado: <strong>{material.file.name}</strong>
+                Arquivo atual:{' '}
+                <strong>
+                  {material.file?.name || material.url?.split('/').pop()}
+                </strong>
               </Typography>
-            ) : (
-              existingFileName && !removeExistingFile && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
-                  Arquivo atual: <strong>{existingFileName}</strong>
-                </Typography>
-              )
             )}
 
-            <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-              <Button variant="outlined" component="label" fullWidth>
-                {material.file ? 'Trocar PDF' : 'Selecionar PDF'}
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  hidden
-                  onChange={handleFileSelection}
-                />
-              </Button>
-              {isEditing && existingFileName && !material.file && !removeExistingFile && (
-                <Button color="error" variant="outlined" onClick={handleRemoveFile}>
-                  Remover
-                </Button>
-              )}
-            </Stack>
+            <Button variant="outlined" component="label" fullWidth>
+              {(material.file || material.url) ? 'Trocar PDF' : 'Selecionar PDF'}
+              <input
+                type="file"
+                accept="application/pdf"
+                hidden
+                onChange={handleFileSelection}
+              />
+            </Button>
           </>
         )}
+
       </DialogContent>
 
       <DialogActions>

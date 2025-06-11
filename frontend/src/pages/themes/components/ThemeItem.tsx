@@ -54,7 +54,7 @@ export default function ThemeItem({
             <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDeleteThemeClick(themeId); }}>
               <Delete fontSize="small" />
             </IconButton>
-            
+
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onExpand(themeId); }}>
               {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </IconButton>
@@ -63,7 +63,7 @@ export default function ThemeItem({
       >
         {/* Número rotacionado */}
         <Box width={48}
-  // height={80}
+          // height={80}
           sx={{
             writingMode: 'vertical-rl',
             transform: 'rotate(180deg)',
@@ -97,18 +97,54 @@ export default function ThemeItem({
         <Box px={4} py={2} bgcolor="#ffffff">
           {materials.length > 0 ? (
             materials.map((m, index) => (
-              <Box key={m.material_id} mb={2} display="flex" justifyContent="space-between" alignItems="flex-start" bgcolor={index % 2 === 0 ? '#f5f5f5' : '#ffffff'}>
+              <Box
+                key={m.material_id}
+                display="flex"
+                alignItems="stretch"
+                minHeight={72}
+                mb={2}
+                bgcolor={index % 2 === 0 ? '#f5f5f5' : '#ffffff'}
+              >
+
                 {/* Coluna da Esquerda: Título e descrição */}
-                <Box>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {m.name}
-                  </Typography>
-                  {m.description && (
-                    <Typography variant="body2" color="text.secondary" mb={0.5}>
-                      {m.description}
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    sx={{
+                      bgcolor: '#9e9e9e', // cinza médio (mais escuro que antes)
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '0.875rem',
+                      borderRadius: 1,
+                      px: 1.5,
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: 32,
+                    }}
+                  >
+                    {m.order}
+                  </Box>
+
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {m.name}
                     </Typography>
-                  )}
+                    {m.description && (
+                      <Typography
+  variant="body2"
+  color="text.secondary"
+  mb={0.5}
+  sx={{ fontSize: '0.725rem' }}
+>
+  {m.description}
+</Typography>
+
+
+                    )}
+                  </Box>
                 </Box>
+
 
                 {/* Coluna da Direita: Tipo, link e ações */}
                 <Box display="flex" flexDirection="column" alignItems="flex-end" minWidth="180px">
