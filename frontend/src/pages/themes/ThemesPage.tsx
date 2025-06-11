@@ -225,6 +225,8 @@ export default function ThemesPage() {
       ...(editandoTemaId ? {} : { class_discipline_id: classDisciplineId }),
     };
 
+    console.log('Salvando tema:', payload);
+
     try {
       const res = await fetch(url, {
         method: editandoTemaId ? 'PUT' : 'POST',
@@ -271,6 +273,7 @@ export default function ThemesPage() {
         setNewDescription('');
         setNewOrder('');
       } else {
+        console.log('Erro ao salvar tema:', json);
         if (json.message?.toLowerCase().includes('ordem')) {
           enqueueSnackbar(
             'Você já cadastrou um tema com essa ordem para essa disciplina. Escolha outro número.',
@@ -385,12 +388,7 @@ export default function ThemesPage() {
           setOpenDialog(false);
           setEditandoTemaId(null);
         }}
-        onSubmit={({ title, description, order }) => {
-          setNewTitle(title);
-          setNewDescription(description);
-          setNewOrder(order);
-          handleSalvarTema();
-        }}
+        onSubmit={handleSalvarTema}
         isEditing={!!editandoTemaId}
         initialData={
           editandoTemaId

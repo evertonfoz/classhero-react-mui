@@ -102,7 +102,11 @@ export default function ThemeFormDialog({
                             Cancelar
                         </Button>
                         <Button
-                            onClick={() => onSubmit({ title, description, order: Number(order) })}
+                            onClick={() => onSubmit({
+      title: title.trim(),
+      description: description.trim(),
+      order: Number(order),
+    })}
                             disabled={!isValid || !isModified}
                             variant="contained"
                         >
