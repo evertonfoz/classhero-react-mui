@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface MaterialFormDialogProps {
   open: boolean;
@@ -27,6 +27,7 @@ interface MaterialForm {
   type: string;
   url: string;
   file?: File;
+  order: string;
 }
 
 export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }: MaterialFormDialogProps) {
@@ -38,7 +39,20 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
     type: '',
     url: '',
     file: undefined,
+    order: '',
   });
+
+  const hasAnyValue = Object.values(material).some((value) => {
+    if (typeof value === 'string') return value.trim() !== '';
+    if (value instanceof File) return true;
+    return false;
+  });
+
+  const isFormValid =
+    material.name.trim() !== '' &&
+    material.type !== '' &&
+    material.order.trim() !== '' &&
+    (material.type !== 'pdf' || material.file);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,14 +62,15 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
   };
 
   const handleSubmit = async () => {
-    if (!themeId || !material.name || !material.type) return;
+    if (!themeId || !isFormValid) return;
 
     const formData = new FormData();
     formData.append('theme_id', themeId);
     formData.append('type', material.type);
     formData.append('title', material.name);
     formData.append('description', material.description);
-    if (material.url && material.type !== 'pdf') formData.append('content', material.url);
+    formData.append('order', material.order);
+    if (material.type !== 'pdf') formData.append('content', material.url);
     if (material.file) formData.append('file', material.file);
 
     const token = localStorage.getItem('access_token');
@@ -71,11 +86,17 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
 
       enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
       onSuccess();
-      setMaterial({ name: '', description: '', type: '', url: '', file: undefined });
+      setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
     } catch {
       enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
     }
   };
+
+  useEffect(() => {
+    if (!open) {
+      setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
+    }
+  }, [open]);
 
   return (
     <Dialog
@@ -87,6 +108,17 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
     >
       <DialogTitle>Novo Material</DialogTitle>
       <DialogContent>
+
+        {/* ORDEM NO TOPO */}
+        <TextField
+          label="Ordem"
+          value={material.order}
+          onChange={(e) => setMaterial({ ...material, order: e.target.value })}
+          fullWidth
+          type="number"
+          margin="normal"
+        />
+
         <TextField
           label="Nome"
           value={material.name}
@@ -111,7 +143,14 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
             labelId="type-label"
             value={material.type}
             label="Tipo"
-            onChange={(e) => setMaterial({ ...material, type: e.target.value })}
+            onChange={(e) =>
+              setMaterial({
+                ...material,
+                type: e.target.value,
+                file: undefined,
+                url: '',
+              })
+            }
           >
             <MenuItem value="text">Texto</MenuItem>
             <MenuItem value="video">Vídeo</MenuItem>
@@ -122,7 +161,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
           </Select>
         </FormControl>
 
-        {material.type !== 'pdf' && (
+        {material.type !== 'pdf' && material.type !== '' && (
           <TextField
             label="URL"
             value={material.url}
@@ -154,15 +193,36 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess }
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Fechar</Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={!material.name || !material.type || (material.type !== 'pdf' && !material.url)}
-          variant="contained"
-        >
-          Salvar
-        </Button>
+        {!hasAnyValue ? (
+          <Button onClick={onClose}>Fechar</Button>
+        ) : (
+          <>
+            <Button
+              onClick={() => {
+                setMaterial({
+                  name: '',
+                  description: '',
+                  type: '',
+                  url: '',
+                  file: undefined,
+                  order: '',
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid}
+              variant="contained"
+            >
+              Salvar
+            </Button>
+          </>
+        )}
       </DialogActions>
+
+
     </Dialog>
   );
 }

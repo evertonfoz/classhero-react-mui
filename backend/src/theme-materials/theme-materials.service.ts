@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateThemeMaterialDto } from './dto/create-theme-material.dto';
 import { UpdateThemeMaterialDto } from './dto/update-theme-material.dto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -21,11 +21,16 @@ export class ThemeMaterialsService {
   }
 
   async create(dto: CreateThemeMaterialDto, file?: Express.Multer.File) {
-    let finalUrl;
+    console.log('Recebido no DTO:', dto);
+    console.log('Arquivo recebido:', file?.originalname);
+
+
     const bucket = 'classhero_bucket';
+    let finalUrl: string;
 
     if (dto.type === 'pdf' && file) {
       const filename = `${uuidv4()}_${file.originalname}`;
+
       const { error: uploadError } = await this.supabase.storage
         .from(bucket)
         .upload(`materials/pdfs/${filename}`, file.buffer, {
@@ -42,24 +47,44 @@ export class ThemeMaterialsService {
         .from(bucket)
         .getPublicUrl(`materials/pdfs/${filename}`);
 
-      finalUrl = publicUrlData;
+      finalUrl = publicUrlData?.publicUrl;
 
+      if (!finalUrl) {
+        throw new InternalServerErrorException('Erro ao obter URL pública do PDF');
+      }
+
+    } else {
+      // Outros tipos (text, video, link, quiz, other)
+      if (!dto.content) {
+        throw new BadRequestException('O campo "content" é obrigatório para esse tipo de material.');
+      }
+      finalUrl = dto.content;
     }
 
-    const { data, error } = await this.supabase.from('theme_materials').insert([
-      {
-        theme_id: dto.theme_id,
-        type: dto.type,
-        title: dto.title,
-        description: dto.description,
-        content: finalUrl,
-      },
-    ]);
+    // Persistência do material
+    const { data, error } = await this.supabase
+      .from('theme_materials')
+      .insert([
+        {
+          theme_id: dto.theme_id,
+          title: dto.title,
+          description: dto.description,
+          type: dto.type,
+          content: finalUrl,
+          order: Number(dto.order), 
+        },
+      ])
+      .select()
+      .single();
 
-    if (error) throw new InternalServerErrorException('Erro ao criar material');
+    if (error) {
+      console.error('Erro ao salvar material:', error.message);
+      throw new InternalServerErrorException('Erro ao salvar material');
+    }
 
     return { data };
   }
+
 
 
   async findAllByTheme(theme_id: string) {

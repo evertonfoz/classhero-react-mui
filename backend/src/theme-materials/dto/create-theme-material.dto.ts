@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateThemeMaterialDto {
   @IsUUID()
@@ -19,4 +19,8 @@ export class CreateThemeMaterialDto {
   @IsString()
   @IsOptional()
   content?: string;
+
+  @IsNotEmpty({ message: 'Ordem é obrigatória.' })
+  @IsNumberString({}, { message: 'Ordem deve ser um número.' })
+  order: string;
 }
