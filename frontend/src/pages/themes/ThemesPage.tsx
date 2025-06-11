@@ -42,7 +42,7 @@ export default function ThemesPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [openMaterialDialogFor, setOpenMaterialDialogFor] = useState<string | null>(null);
-  const [newMaterial, setNewMaterial] = useState<Partial<Material> & { file?: File }>({});
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
@@ -130,10 +130,13 @@ export default function ThemesPage() {
 
         return {
           material_id: m.material_id,
+          theme_id: themeId,
           name: m.title,
           description: m.description,
           type: m.type,
           content: finalUrl,
+          order: m.order,
+          url: finalUrl,
         };
       });
 
@@ -171,8 +174,8 @@ export default function ThemesPage() {
 
 
   const handleEditMaterial = (material: Material) => {
-    setOpenMaterialDialogFor(material.material_id); // ou tema atual
-    setNewMaterial(material); // pré-carrega os campos no dialog
+    setEditingMaterial(material);
+    setOpenMaterialDialogFor(material.theme_id);
   };
 
   const confirmDeleteMaterial = async (materialId: string) => {
@@ -381,12 +384,18 @@ export default function ThemesPage() {
 
       <MaterialFormDialog
         open={!!openMaterialDialogFor}
-        onClose={() => setOpenMaterialDialogFor(null)}
+        onClose={() => {
+          setOpenMaterialDialogFor(null);
+          setEditingMaterial(null);
+        }}
         themeId={openMaterialDialogFor}
         onSuccess={() => {
           if (openMaterialDialogFor) fetchMaterials(openMaterialDialogFor);
           setOpenMaterialDialogFor(null);
+          setEditingMaterial(null);
         }}
+        isEditing={!!editingMaterial}
+        initialData={editingMaterial || undefined}
       />
 
       <ConfirmationDialog
