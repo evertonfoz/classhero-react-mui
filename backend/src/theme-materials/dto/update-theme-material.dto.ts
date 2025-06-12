@@ -7,9 +7,9 @@ import {
 } from 'class-validator';
 
 export class UpdateThemeMaterialDto {
-  @IsEnum(['text', 'video', 'link', 'pdf', 'quiz', 'other'])
+  @IsEnum(['text', 'video', 'link', 'pdf', 'quiz', 'podcast', 'other'])
   @IsOptional()
-  type?: 'text' | 'video' | 'link' | 'pdf' | 'quiz' | 'other';
+  type?: 'text' | 'video' | 'link' | 'pdf' | 'quiz' | 'podcast' | 'other';
 
   @IsString()
   @IsOptional()

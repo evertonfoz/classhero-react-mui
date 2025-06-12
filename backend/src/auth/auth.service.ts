@@ -19,24 +19,28 @@ export class AuthService {
     }
 
     async sendCode(email: string) {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Remove códigos antigos
-        await this.supabase.from('otps').delete().eq('email', email);
-
-        // Insere novo código
-        const { error } = await this.supabase.from('otps').insert({ email, otp_code: otp });
-
-        if (error) {
-            throw new InternalServerErrorException('Erro ao salvar o OTP no Supabase.');
+        try {
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+            // Remove códigos antigos
+            await this.supabase.from('otps').delete().eq('email', email);
+    
+            // Insere novo código
+            const { error } = await this.supabase.from('otps').insert({ email, otp_code: otp });
+    
+            if (error) {
+                throw new InternalServerErrorException('Erro ao salvar o OTP no Supabase.');
+            }
+    
+            await this.emailService.sendOtpEmail(email, otp);
+    
+            // Envio real de e-mail seria feito aqui
+            console.log(`Código ENVIADO para ${email}: ${otp}`);
+    
+            return { message: 'Código enviado por e-mail!' };
+        } catch (error) {
+            console.log('Erro ao enviar código:', error);
         }
-
-        await this.emailService.sendOtpEmail(email, otp);
-
-        // Envio real de e-mail seria feito aqui
-        console.log(`Código ENVIADO para ${email}: ${otp}`);
-
-        return { message: 'Código enviado por e-mail!' };
     }
 
     async verifyCode(email: string, code: string) {

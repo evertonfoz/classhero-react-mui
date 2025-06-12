@@ -26,9 +26,6 @@ export class ThemeMaterialsService {
   }
 
   async create(dto: CreateThemeMaterialDto, file?: Express.Multer.File) {
-    console.log('Recebido no DTO:', dto);
-    console.log('Arquivo recebido:', file?.originalname);
-
     const bucket = 'classhero_bucket';
     let finalUrl: string;
 
@@ -93,7 +90,7 @@ export class ThemeMaterialsService {
       .from('theme_materials')
       .select('*')
       .eq('theme_id', theme_id)
-      .order('created_at', { ascending: false });
+      .order('order', { ascending: true });
 
     if (error) throw new Error('Erro ao buscar materiais');
     return data;

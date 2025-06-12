@@ -5,7 +5,10 @@ WORKDIR /app
 
 # Instala dependências primeiro para aproveitar cache
 COPY package*.json ./
+# COPY .npmrc .npmrc
+
 RUN npm install --legacy-peer-deps
+# RUN npm cache clean --force && npm install --legacy-peer-deps
 
 # Copia o restante do código
 COPY . .

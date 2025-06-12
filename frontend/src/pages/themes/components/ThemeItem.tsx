@@ -7,6 +7,7 @@ import { ExpandLess, ExpandMore, Edit, Delete, Add } from '@mui/icons-material';
 import type { Material } from '../../../types/material';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import MicIcon from '@mui/icons-material/Mic';
 
 interface ThemeItemProps {
   themeId: string;
@@ -157,8 +158,9 @@ export default function ThemeItem({
 
                   {/* Grupo de botões para links */}
                   <Box display="flex" gap={0.5} mt={0.5}>
-                    {m.content && (
-                      <Tooltip title="Abrir material principal">
+                    {/* Ícone principal do material (condicional por tipo) */}
+                    {m.type === 'pdf' && m.content && (
+                      <Tooltip title="Abrir PDF">
                         <IconButton
                           size="small"
                           component="a"
@@ -171,37 +173,68 @@ export default function ThemeItem({
                       </Tooltip>
                     )}
 
+                    {m.type === 'video' && m.content && (
+                      <Tooltip title="Assistir vídeo">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={m.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <YouTubeIcon sx={{ color: '#FF0000' }} fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+
+
+                   {m.type === 'podcast' && m.url && (
+  <Tooltip title="Ouvir Podcast">
+    <IconButton
+      size="small"
+      href={m.url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+        <MicIcon sx={{ color: '#1976d2', fontSize: 24 }} /> {/* Azul padrão MUI */}
+    </IconButton>
+  </Tooltip>
+)}
+
+
+
+
                     {m.youtube_pt_url && (
                       <Tooltip title="Ver no YouTube (PT)">
-  <IconButton
-    size="small"
-    href={m.youtube_pt_url}
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
-      <YouTubeIcon sx={{ color: '#FF0000', fontSize: 24 }} />
-      <Typography variant="caption" fontSize="1.1rem">🇧🇷</Typography>
-    </Box>
-  </IconButton>
-</Tooltip>
+                        <IconButton
+                          size="small"
+                          href={m.youtube_pt_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
+                            <YouTubeIcon sx={{ color: '#FF0000', fontSize: 24 }} />
+                            <Typography variant="caption" fontSize="1.1rem">🇧🇷</Typography>
+                          </Box>
+                        </IconButton>
+                      </Tooltip>
 
                     )}
 
                     {m.youtube_en_url && (
                       <Tooltip title="Watch on YouTube (EN)">
-  <IconButton
-    size="small"
-    href={m.youtube_en_url}
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
-      <YouTubeIcon sx={{ color: '#8E24AA', fontSize: 24 }} />
-      <Typography variant="caption" fontSize="1.1rem">🇺🇸</Typography>
-    </Box>
-  </IconButton>
-</Tooltip>
+                        <IconButton
+                          size="small"
+                          href={m.youtube_en_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
+                            <YouTubeIcon sx={{ color: '#8E24AA', fontSize: 24 }} />
+                            <Typography variant="caption" fontSize="1.1rem">🇺🇸</Typography>
+                          </Box>
+                        </IconButton>
+                      </Tooltip>
 
                     )}
                   </Box>

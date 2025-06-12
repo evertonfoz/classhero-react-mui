@@ -12,8 +12,8 @@ export class CreateThemeMaterialDto {
   @IsNotEmpty()
   theme_id: string;
 
-  @IsEnum(['text', 'video', 'link', 'pdf', 'quiz', 'other'])
-  type: 'text' | 'video' | 'link' | 'pdf' | 'quiz' | 'other';
+  @IsEnum(['text', 'video', 'link', 'pdf', 'quiz', 'podcast','other'])
+  type: 'text' | 'video' | 'link' | 'pdf' | 'quiz' | 'podcast' | 'other';
 
   @IsString()
   @IsNotEmpty()

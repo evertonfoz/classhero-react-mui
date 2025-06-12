@@ -20,19 +20,33 @@ export class ThemeMaterialsController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async create(@Body() body: any, @UploadedFile() file?: Express.Multer.File) {
-    // Transforma e valida
     const dto = plainToInstance(CreateThemeMaterialDto, body);
+
     try {
-      await validateOrReject(dto, { whitelist: true, forbidNonWhitelisted: true });
+      await validateOrReject(dto, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
     } catch (errors) {
-      // Extrai mensagens
       const validationErrors = errors.map((e) => Object.values(e.constraints || {})).flat();
       console.error('Erro de validação:', validationErrors);
       throw new BadRequestException(validationErrors);
     }
 
-    return this.service.create(dto, file);
+    try {
+      return await this.service.create(dto, file);
+    } catch (err: any) {
+      console.error('Erro ao salvar material:', err.message || err);
+
+      // Retorno padronizado
+      throw new BadRequestException(
+        err instanceof BadRequestException
+          ? err.message
+          : 'Erro inesperado ao salvar o material. Verifique os dados enviados.'
+      );
+    }
   }
+
 
   @Get('by-theme/:themeId')
   findAllByTheme(@Param('themeId') themeId: string) {

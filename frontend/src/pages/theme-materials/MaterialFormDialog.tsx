@@ -3,17 +3,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
   CircularProgress,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import MaterialFormFields from './components/MaterialFormFields';
 
 interface MaterialFormDialogProps {
   open: boolean;
@@ -63,6 +58,8 @@ function extractFileName(content?: string) {
 
 export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, isEditing = false, initialData }: MaterialFormDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const linksGeradosRef = useRef(false);
+
 
   const [material, setMaterial] = useState<MaterialForm>({
     name: '',
@@ -84,13 +81,19 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
   const [originalData, setOriginalData] = useState<MaterialForm | null>(null);
   const [existingFileName, setExistingFileName] = useState('');
   const [removeExistingFile, setRemoveExistingFile] = useState(false);
-  const [youtubeLinks, setYoutubeLinks] = useState<{ pt: string; en: string }>({ pt: '', en: '' });
 
   const hasAnyValue = Object.values(material).some((value) => {
     if (typeof value === 'string') return value.trim() !== '';
     if (value instanceof File) return true;
     return false;
   });
+
+
+  useEffect(() => {
+    if (!open) {
+      linksGeradosRef.current = false;
+    }
+  }, [open])
 
   const hasChanges = isEditing
     ?
@@ -237,7 +240,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
   useEffect(() => {
     if (!open) return;
 
-    if (isEditing && initialData) {
+    if (isEditing && initialData && !linksGeradosRef.current) {
       const data = {
         name: initialData.name,
         description: initialData.description || '',
@@ -252,7 +255,9 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
       setOriginalData({ ...data, file: undefined });
       setExistingFileName(extractFileName(initialData.content));
       setRemoveExistingFile(false);
+
     } else {
+      console.log('🆕 useEffect novo material limpo');
       const empty = { name: '', description: '', type: '', url: '', file: undefined, order: '' };
       setMaterial(empty);
       setOriginalData(empty);
@@ -279,11 +284,17 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
       const data = await res.json();
 
-      setMaterial((prev) => ({
-        ...prev,
-        youtube_pt_url: data.pt,
-        youtube_en_url: data.en,
-      }));
+      setMaterial((prev) => {
+        const updated = {
+          ...prev,
+          youtube_pt_url: data.pt,
+          youtube_en_url: data.en,
+        };
+
+        return updated;
+      });
+
+      linksGeradosRef.current = true;
 
       enqueueSnackbar('Links do YouTube gerados com sucesso!', { variant: 'success' });
     } catch (err) {
@@ -306,141 +317,16 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
       <DialogTitle>{isEditing ? 'Editar Material' : 'Novo Material'}</DialogTitle>
       <DialogContent>
 
-        {/* ORDEM NO TOPO */}
-        <TextField
-          label="Ordem"
-          value={material.order}
-          onChange={(e) => setMaterial({ ...material, order: e.target.value })}
-          fullWidth
-          type="number"
-          margin="normal"
-          disabled={isBusy}
+        <MaterialFormFields
+          material={material}
+          isBusy={isBusy}
+          isEditing={isEditing}
+          isFormValid={isFormValid}
+          loadingLinks={loadingLinks}
+          removeExistingFile={removeExistingFile}
+          onGenerateLinks={gerarLinksYouTube}
+          onMaterialChange={(changes) => setMaterial((prev) => ({ ...prev, ...changes }))}
         />
-
-        <TextField
-          label="Nome"
-          value={material.name}
-          onChange={(e) => setMaterial({ ...material, name: e.target.value })}
-          fullWidth
-          margin="normal"
-          disabled={isBusy}
-        />
-
-        <TextField
-          label="Descrição"
-          value={material.description}
-          onChange={(e) => setMaterial({ ...material, description: e.target.value })}
-          fullWidth
-          multiline
-          rows={2}
-          margin="normal"
-          disabled={isBusy}
-        />
-
-        <FormControl fullWidth margin="normal">
-          <InputLabel id="type-label">Tipo</InputLabel>
-          <Select
-            labelId="type-label"
-            value={material.type}
-            label="Tipo"
-            disabled={isBusy}
-            onChange={(e) =>
-              setMaterial({
-                ...material,
-                type: e.target.value,
-                file: undefined,
-                url: '',
-              })
-            }
-          >
-            <MenuItem value="text">Texto</MenuItem>
-            <MenuItem value="video">Vídeo</MenuItem>
-            <MenuItem value="link">Link</MenuItem>
-            <MenuItem value="pdf">PDF</MenuItem>
-            <MenuItem value="quiz">Quiz</MenuItem>
-            <MenuItem value="other">Outro</MenuItem>
-          </Select>
-        </FormControl>
-
-        {material.type !== 'pdf' && material.type !== '' && (
-          <TextField
-            disabled={isBusy}
-            label="URL"
-            value={material.url}
-            onChange={(e) => setMaterial({ ...material, url: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-        )}
-
-        {material.type === 'pdf' && (
-          <>
-            {/* Mostra o nome do arquivo selecionado OU nome do anterior se estiver em edição */}
-            {(material.file || material.url) && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
-                Arquivo atual:{' '}
-                <strong>
-                  {material.file?.name || material.url?.split('/').pop()}
-                </strong>
-              </Typography>
-            )}
-
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-              disabled={saving || loadingLinks}
-            >
-              {(material.file || material.url) ? 'Trocar PDF' : 'Selecionar PDF'}
-              <input
-                disabled={isBusy}
-                type="file"
-                accept="application/pdf"
-                hidden
-                onChange={handleFileSelection}
-              />
-            </Button>
-
-          </>
-        )}
-
-        {/* Botão para gerar os links */}
-        {isFormValid && (
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={gerarLinksYouTube}
-            disabled={loadingLinks}
-            startIcon={loadingLinks && <CircularProgress size="1rem" />}
-          >
-            {loadingLinks ? 'Gerando links...' : 'Gerar Links do YouTube'}
-          </Button>
-        )}
-
-
-        {/* Campos de links gerados */}
-        {isFormValid && material.youtube_pt_url && (
-          <TextField
-            label="YouTube (Português)"
-            value={material.youtube_pt_url}
-            InputProps={{ readOnly: true }}
-            fullWidth
-            margin="normal"
-            disabled={isBusy}
-          />
-        )}
-        {isFormValid && material.youtube_en_url && (
-          <TextField
-            label="YouTube (Inglês)"
-            value={material.youtube_en_url}
-            InputProps={{ readOnly: true }}
-            fullWidth
-            margin="normal"
-            disabled={isBusy}
-          />
-        )}
-
 
       </DialogContent>
 
@@ -463,7 +349,10 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
                     url: '',
                     file: undefined,
                     order: '',
+                    youtube_pt_url: '',
+                    youtube_en_url: '',
                   });
+
                   setExistingFileName('');
                   setRemoveExistingFile(false);
                 }
