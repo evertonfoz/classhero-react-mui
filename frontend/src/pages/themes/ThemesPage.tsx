@@ -132,6 +132,8 @@ export default function ThemesPage() {
           content: finalUrl,
           order: m.order,
           url: finalUrl,
+          youtube_pt_url: m.youtube_pt_url,
+          youtube_en_url: m.youtube_en_url,
         };
       });
 

@@ -1,9 +1,12 @@
 // components/ThemeItem.tsx
 import {
-  Box, ListItem, ListItemText, IconButton, Typography, Collapse, Button
+  Box, ListItem, ListItemText, IconButton, Typography, Collapse, Button,
+  Tooltip
 } from '@mui/material';
 import { ExpandLess, ExpandMore, Edit, Delete, Add } from '@mui/icons-material';
 import type { Material } from '../../../types/material';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 interface ThemeItemProps {
   themeId: string;
@@ -132,13 +135,13 @@ export default function ThemeItem({
                     </Typography>
                     {m.description && (
                       <Typography
-  variant="body2"
-  color="text.secondary"
-  mb={0.5}
-  sx={{ fontSize: '0.725rem' }}
->
-  {m.description}
-</Typography>
+                        variant="body2"
+                        color="text.secondary"
+                        mb={0.5}
+                        sx={{ fontSize: '0.725rem' }}
+                      >
+                        {m.description}
+                      </Typography>
 
 
                     )}
@@ -151,13 +154,59 @@ export default function ThemeItem({
                   <Typography variant="body2">
                     Tipo: <strong>{m.type.toUpperCase()}</strong>
                   </Typography>
-                  {m.content && (
-                    <Typography variant="body2" mt={0.5}>
-                      <a href={m.content} target="_blank" rel="noopener noreferrer">
-                        Abrir material
-                      </a>
-                    </Typography>
-                  )}
+
+                  {/* Grupo de botões para links */}
+                  <Box display="flex" gap={0.5} mt={0.5}>
+                    {m.content && (
+                      <Tooltip title="Abrir material principal">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={m.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <PictureAsPdfIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+
+                    {m.youtube_pt_url && (
+                      <Tooltip title="Ver no YouTube (PT)">
+  <IconButton
+    size="small"
+    href={m.youtube_pt_url}
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
+      <YouTubeIcon sx={{ color: '#FF0000', fontSize: 24 }} />
+      <Typography variant="caption" fontSize="1.1rem">🇧🇷</Typography>
+    </Box>
+  </IconButton>
+</Tooltip>
+
+                    )}
+
+                    {m.youtube_en_url && (
+                      <Tooltip title="Watch on YouTube (EN)">
+  <IconButton
+    size="small"
+    href={m.youtube_en_url}
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <Box display="flex" flexDirection="column" alignItems="center" gap={0.2}>
+      <YouTubeIcon sx={{ color: '#8E24AA', fontSize: 24 }} />
+      <Typography variant="caption" fontSize="1.1rem">🇺🇸</Typography>
+    </Box>
+  </IconButton>
+</Tooltip>
+
+                    )}
+                  </Box>
+
+                  {/* Botões de ação */}
                   <Box mt={1}>
                     <IconButton size="small" onClick={() => onEditMaterial({ ...m, theme_id: themeId })}>
                       <Edit fontSize="small" />
@@ -169,10 +218,9 @@ export default function ThemeItem({
                     >
                       <Delete fontSize="small" />
                     </IconButton>
-
-
                   </Box>
                 </Box>
+
 
 
               </Box>

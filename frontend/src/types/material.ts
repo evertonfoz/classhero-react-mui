@@ -7,4 +7,6 @@ export interface Material {
   url: string;
   description?: string;
   content?: string;
+  youtube_pt_url?: string;
+  youtube_en_url?: string;
 }
