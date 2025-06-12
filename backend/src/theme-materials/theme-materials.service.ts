@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateThemeMaterialDto } from './dto/create-theme-material.dto';
 import { UpdateThemeMaterialDto } from './dto/update-theme-material.dto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid'; // ✅ correto
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ThemeMaterialsService {
@@ -23,7 +28,6 @@ export class ThemeMaterialsService {
   async create(dto: CreateThemeMaterialDto, file?: Express.Multer.File) {
     console.log('Recebido no DTO:', dto);
     console.log('Arquivo recebido:', file?.originalname);
-
 
     const bucket = 'classhero_bucket';
     let finalUrl: string;
@@ -52,16 +56,13 @@ export class ThemeMaterialsService {
       if (!finalUrl) {
         throw new InternalServerErrorException('Erro ao obter URL pública do PDF');
       }
-
     } else {
-      // Outros tipos (text, video, link, quiz, other)
       if (!dto.content) {
         throw new BadRequestException('O campo "content" é obrigatório para esse tipo de material.');
       }
       finalUrl = dto.content;
     }
 
-    // Persistência do material
     const { data, error } = await this.supabase
       .from('theme_materials')
       .insert([
@@ -72,6 +73,8 @@ export class ThemeMaterialsService {
           type: dto.type,
           content: finalUrl,
           order: Number(dto.order),
+          youtube_pt_url: dto.youtube_pt_url,
+          youtube_en_url: dto.youtube_en_url,
         },
       ])
       .select()
@@ -84,8 +87,6 @@ export class ThemeMaterialsService {
 
     return { data };
   }
-
-
 
   async findAllByTheme(theme_id: string) {
     const { data, error } = await this.supabase
@@ -124,7 +125,7 @@ export class ThemeMaterialsService {
               /^\/storage\/v1\/object\/public\/classhero_bucket\//,
               '',
             );
-          } catch { }
+          } catch {}
         }
 
         if (!dto.type) {
@@ -159,7 +160,15 @@ export class ThemeMaterialsService {
 
     const { data, error } = await this.supabase
       .from('theme_materials')
-      .update(dto)
+      .update({
+        title: dto.title,
+        description: dto.description,
+        type: dto.type,
+        content: dto.content,
+        order: Number(dto.order),
+        youtube_pt_url: dto.youtube_pt_url,
+        youtube_en_url: dto.youtube_en_url,
+      })
       .eq('material_id', id)
       .select()
       .single();
@@ -174,7 +183,6 @@ export class ThemeMaterialsService {
   }
 
   async remove(id: string) {
-    // 1. Buscar material antes de excluir
     const { data: material, error: fetchError } = await this.supabase
       .from('theme_materials')
       .select('content')
@@ -185,7 +193,6 @@ export class ThemeMaterialsService {
       throw new NotFoundException('Material não encontrado');
     }
 
-    // 2. Extrair o path do arquivo (ex: "materials/pdfs/arquivo.pdf")
     let filePath = '';
     try {
       filePath = new URL(material.content).pathname.replace(
@@ -196,8 +203,6 @@ export class ThemeMaterialsService {
       console.warn('Erro ao extrair path direto do conteúdo', e);
     }
 
-
-    // 3. Remover do banco de dados
     const { error: deleteError } = await this.supabase
       .from('theme_materials')
       .delete()
@@ -205,7 +210,6 @@ export class ThemeMaterialsService {
 
     if (deleteError) throw new NotFoundException('Erro ao excluir material');
 
-    // 4. Remover do bucket (caso tenha path válido)
     if (filePath) {
       const { error: storageError } = await this.supabase.storage
         .from('classhero_bucket')
@@ -218,6 +222,4 @@ export class ThemeMaterialsService {
 
     return { message: 'Material excluído com sucesso' };
   }
-
 }
-

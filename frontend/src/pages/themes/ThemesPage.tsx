@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowBack, Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import MaterialFormDialog from '../materials/MaterialFormDialog';
+import MaterialFormDialog from '../theme-materials/MaterialFormDialog';
 import type { Material } from '../../types/material';
 import ThemeFormDialog from './components/ThemeFormDialog';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';

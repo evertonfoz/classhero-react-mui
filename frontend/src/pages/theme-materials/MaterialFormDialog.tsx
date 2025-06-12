@@ -38,6 +38,8 @@ interface MaterialForm {
   url: string;
   file?: File;
   order: string;
+  youtube_pt_url?: string;
+  youtube_en_url?: string; 
 }
 
 function extractFileName(content?: string) {
@@ -69,6 +71,8 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
     url: '',
     file: undefined,
     order: '',
+    youtube_pt_url: '',
+    youtube_en_url: '',
   });
 
   const [loadingLinks, setLoadingLinks] = useState(false);
@@ -96,6 +100,8 @@ const isBusy = saving || loadingLinks;
       material.type !== originalData.type ||
       material.url !== originalData.url ||
       material.order !== originalData.order ||
+      material.youtube_pt_url !== originalData.youtube_pt_url ||
+      material.youtube_en_url !== originalData.youtube_en_url ||
       !!material.file ||
       removeExistingFile)
     : hasAnyValue;
@@ -108,7 +114,7 @@ const isBusy = saving || loadingLinks;
     (material.type !== 'pdf'
       ? true
       : isEditing
-        ? !removeExistingFile || !!material.file
+        ? !removeExistingFile || !!material.file 
         : !!material.file);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,78 +131,106 @@ const isBusy = saving || loadingLinks;
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid) return;
+  if (!isFormValid) return;
 
-    setSaving(true); // ⬅️ Ativa indicador de progresso
-    const token = localStorage.getItem('access_token');
+  setSaving(true);
+  const token = localStorage.getItem('access_token');
 
-    try {
-      if (isEditing && initialData) {
-        if (material.file) {
-          const formData = new FormData();
-          formData.append('title', material.name);
-          formData.append('description', material.description);
-          formData.append('type', material.type);
-          formData.append('order', material.order);
-          formData.append('file', material.file);
-
-          const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
-            method: 'PUT',
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          });
-
-          if (!res.ok) throw new Error();
-          enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
-        } else {
-          const payload = {
-            title: material.name,
-            description: material.description,
-            type: material.type,
-            content: material.type !== 'pdf' ? material.url : initialData.content,
-          };
-
-          const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(payload),
-          });
-
-          if (!res.ok) throw new Error();
-          enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
-        }
-      } else {
-        if (!themeId) return;
+  try {
+    if (isEditing && initialData) {
+      if (material.file) {
         const formData = new FormData();
-        formData.append('theme_id', themeId);
-        formData.append('type', material.type);
         formData.append('title', material.name);
         formData.append('description', material.description);
+        formData.append('type', material.type);
         formData.append('order', material.order);
-        if (material.type !== 'pdf') formData.append('content', material.url);
-        if (material.file) formData.append('file', material.file);
+        formData.append('file', material.file);
 
-        const res = await fetch('http://localhost:3000/theme-materials', {
-          method: 'POST',
+        const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
+          method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
         if (!res.ok) throw new Error();
+        enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+      } else {
+        const payload: Record<string, any> = {
+          title: material.name,
+          description: material.description,
+          type: material.type,
+          content: material.type !== 'pdf' ? material.url : initialData.content,
+          order: material.order,
+        };
 
-        enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
+        if (material.type !== 'pdf') {
+          payload.youtube_pt_url = material.youtube_pt_url || '';
+          payload.youtube_en_url = material.youtube_en_url || '';
+        }
+
+        const res = await fetch(`http://localhost:3000/theme-materials/${initialData.material_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error();
+        enqueueSnackbar('Material atualizado com sucesso.', { variant: 'success' });
+      }
+    } else {
+      if (!themeId) return;
+
+      const formData = new FormData();
+      formData.append('theme_id', themeId);
+      formData.append('type', material.type);
+      formData.append('title', material.name);
+      formData.append('description', material.description);
+      formData.append('order', material.order);
+
+      if (material.type !== 'pdf') {
+        formData.append('content', material.url);
+        formData.append('youtube_pt_url', material.youtube_pt_url || '');
+        formData.append('youtube_en_url', material.youtube_en_url || '');
       }
 
-      onSuccess();
-      setMaterial({ name: '', description: '', type: '', url: '', file: undefined, order: '' });
-      setExistingFileName('');
-      setRemoveExistingFile(false);
-    } catch {
-      enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
-    } finally {
-      setSaving(false); // ⬅️ Desativa indicador de progresso
+      if (material.file) {
+        formData.append('file', material.file);
+      }
+
+      const res = await fetch('http://localhost:3000/theme-materials', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error();
+
+      enqueueSnackbar('Material salvo com sucesso.', { variant: 'success' });
     }
-  };
+
+    onSuccess();
+    setMaterial({
+      name: '',
+      description: '',
+      type: '',
+      url: '',
+      file: undefined,
+      order: '',
+      youtube_pt_url: '',
+      youtube_en_url: '',
+    });
+    setExistingFileName('');
+    setRemoveExistingFile(false);
+  } catch {
+    enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
+  } finally {
+    setSaving(false);
+  }
+};
+
 
 
   useEffect(() => {
@@ -204,12 +238,15 @@ const isBusy = saving || loadingLinks;
 
     if (isEditing && initialData) {
       const data = {
-        name: initialData.name,
-        description: initialData.description || '',
-        type: initialData.type,
-        url: initialData.content || '',
-        order: initialData.order.toString(),
-      } as MaterialForm;
+  name: initialData.name,
+  description: initialData.description || '',
+  type: initialData.type,
+  url: initialData.content || '',
+  order: initialData.order.toString(),
+  youtube_pt_url: (initialData as any).youtube_pt_url || '',
+  youtube_en_url: (initialData as any).youtube_en_url || '',
+} as MaterialForm;
+
       setMaterial({ ...data, file: undefined });
       setOriginalData({ ...data, file: undefined });
       setExistingFileName(extractFileName(initialData.content));
@@ -225,28 +262,35 @@ const isBusy = saving || loadingLinks;
 
 
   async function gerarLinksYouTube() {
-    setLoadingLinks(true);
-    try {
-      const res = await fetch('http://localhost:8000/youtube-links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: material.name,
-          description: material.description,
-        }),
-      });
+  setLoadingLinks(true);
 
-      if (!res.ok) throw new Error('Erro ao gerar links');
+  try {
+    const res = await fetch('http://localhost:8000/youtube-links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: material.name,
+        description: material.description,
+      }),
+    });
 
-      const data = await res.json();
-      setYoutubeLinks(data);
-      console.log('Links gerados:', data);
-    } catch (err) {
-      enqueueSnackbar('Erro ao gerar links do YouTube', { variant: 'error' });
-    } finally {
-      setLoadingLinks(false);
-    }
+    if (!res.ok) throw new Error('Erro ao gerar links');
+
+    const data = await res.json();
+
+    setMaterial((prev) => ({
+      ...prev,
+      youtube_pt_url: data.pt,
+      youtube_en_url: data.en,
+    }));
+
+    enqueueSnackbar('Links do YouTube gerados com sucesso!', { variant: 'success' });
+  } catch (err) {
+    enqueueSnackbar('Erro ao gerar links do YouTube', { variant: 'error' });
+  } finally {
+    setLoadingLinks(false);
   }
+}
 
 
 
@@ -375,32 +419,33 @@ const isBusy = saving || loadingLinks;
 
 
         {/* Campos de links gerados */}
-        {isFormValid && youtubeLinks.pt && (
-          <TextField
-            label="YouTube (Português)"
-            value={youtubeLinks.pt}
-            InputProps={{ readOnly: true }}
-            fullWidth
-            margin="normal"
-            disabled={isBusy}
-          />
-        )}
-        {isFormValid && youtubeLinks.en && (
-          <TextField
-            label="YouTube (Inglês)"
-            value={youtubeLinks.en}
-            InputProps={{ readOnly: true }}
-            fullWidth
-            margin="normal"
-            disabled={isBusy}
-          />
-        )}
+        {isFormValid && material.youtube_pt_url && (
+  <TextField
+    label="YouTube (Português)"
+    value={material.youtube_pt_url}
+    InputProps={{ readOnly: true }}
+    fullWidth
+    margin="normal"
+    disabled={isBusy}
+  />
+)}
+{isFormValid && material.youtube_en_url && (
+  <TextField
+    label="YouTube (Inglês)"
+    value={material.youtube_en_url}
+    InputProps={{ readOnly: true }}
+    fullWidth
+    margin="normal"
+    disabled={isBusy}
+  />
+)}
+
 
       </DialogContent>
 
       <DialogActions>
         {!hasChanges ? (
-          <Button onClick={onClose}>Fechar</Button>
+          <Button onClick={onClose} disabled={loadingLinks || saving}>Fechar</Button>
         ) : (
           <>
             <Button
