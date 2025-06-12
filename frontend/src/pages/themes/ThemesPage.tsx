@@ -4,17 +4,12 @@ import {
   IconButton,
   Divider,
   Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowBack, Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import MaterialFormDialog from './components/MaterialFormDialog';
+import MaterialFormDialog from '../materials/MaterialFormDialog';
 import type { Material } from '../../types/material';
 import ThemeFormDialog from './components/ThemeFormDialog';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';

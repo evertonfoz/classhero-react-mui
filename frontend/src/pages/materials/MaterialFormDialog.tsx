@@ -10,6 +10,7 @@ import {
   MenuItem,
   Select,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -70,9 +71,16 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
     order: '',
   });
 
+  const [loadingLinks, setLoadingLinks] = useState(false);
+  const [saving, setSaving] = useState(false);
+const isBusy = saving || loadingLinks;
+
+
+
   const [originalData, setOriginalData] = useState<MaterialForm | null>(null);
   const [existingFileName, setExistingFileName] = useState('');
   const [removeExistingFile, setRemoveExistingFile] = useState(false);
+  const [youtubeLinks, setYoutubeLinks] = useState<{ pt: string; en: string }>({ pt: '', en: '' });
 
   const hasAnyValue = Object.values(material).some((value) => {
     if (typeof value === 'string') return value.trim() !== '';
@@ -94,6 +102,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
   const isFormValid =
     material.name.trim() !== '' &&
+    material.description.trim() !== '' &&
     material.type !== '' &&
     material.order.trim() !== '' &&
     (material.type !== 'pdf'
@@ -118,6 +127,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
   const handleSubmit = async () => {
     if (!isFormValid) return;
 
+    setSaving(true); // ⬅️ Ativa indicador de progresso
     const token = localStorage.getItem('access_token');
 
     try {
@@ -183,8 +193,11 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
       setRemoveExistingFile(false);
     } catch {
       enqueueSnackbar('Erro ao salvar material.', { variant: 'error' });
+    } finally {
+      setSaving(false); // ⬅️ Desativa indicador de progresso
     }
   };
+
 
   useEffect(() => {
     if (!open) return;
@@ -210,6 +223,33 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
     }
   }, [open, isEditing, initialData]);
 
+
+  async function gerarLinksYouTube() {
+    setLoadingLinks(true);
+    try {
+      const res = await fetch('http://localhost:8000/youtube-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: material.name,
+          description: material.description,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Erro ao gerar links');
+
+      const data = await res.json();
+      setYoutubeLinks(data);
+      console.log('Links gerados:', data);
+    } catch (err) {
+      enqueueSnackbar('Erro ao gerar links do YouTube', { variant: 'error' });
+    } finally {
+      setLoadingLinks(false);
+    }
+  }
+
+
+
   return (
     <Dialog
       open={open}
@@ -229,6 +269,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
           fullWidth
           type="number"
           margin="normal"
+          disabled={isBusy}
         />
 
         <TextField
@@ -237,6 +278,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
           onChange={(e) => setMaterial({ ...material, name: e.target.value })}
           fullWidth
           margin="normal"
+          disabled={isBusy}
         />
 
         <TextField
@@ -247,6 +289,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
           multiline
           rows={2}
           margin="normal"
+          disabled={isBusy}
         />
 
         <FormControl fullWidth margin="normal">
@@ -255,6 +298,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
             labelId="type-label"
             value={material.type}
             label="Tipo"
+            disabled={isBusy}
             onChange={(e) =>
               setMaterial({
                 ...material,
@@ -275,6 +319,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
 
         {material.type !== 'pdf' && material.type !== '' && (
           <TextField
+          disabled={isBusy}
             label="URL"
             value={material.url}
             onChange={(e) => setMaterial({ ...material, url: e.target.value })}
@@ -295,16 +340,60 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
               </Typography>
             )}
 
-            <Button variant="outlined" component="label" fullWidth>
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+              disabled={saving || loadingLinks}
+            >
               {(material.file || material.url) ? 'Trocar PDF' : 'Selecionar PDF'}
               <input
+              disabled={isBusy}
                 type="file"
                 accept="application/pdf"
                 hidden
                 onChange={handleFileSelection}
               />
             </Button>
+
           </>
+        )}
+
+        {/* Botão para gerar os links */}
+        {isFormValid && (
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={gerarLinksYouTube}
+            disabled={loadingLinks}
+            startIcon={loadingLinks && <CircularProgress size="1rem" />}
+          >
+            {loadingLinks ? 'Gerando links...' : 'Gerar Links do YouTube'}
+          </Button>
+        )}
+
+
+        {/* Campos de links gerados */}
+        {isFormValid && youtubeLinks.pt && (
+          <TextField
+            label="YouTube (Português)"
+            value={youtubeLinks.pt}
+            InputProps={{ readOnly: true }}
+            fullWidth
+            margin="normal"
+            disabled={isBusy}
+          />
+        )}
+        {isFormValid && youtubeLinks.en && (
+          <TextField
+            label="YouTube (Inglês)"
+            value={youtubeLinks.en}
+            InputProps={{ readOnly: true }}
+            fullWidth
+            margin="normal"
+            disabled={isBusy}
+          />
         )}
 
       </DialogContent>
@@ -338,11 +427,14 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid}
+              disabled={!isFormValid || saving}
               variant="contained"
+              startIcon={saving && <CircularProgress size="1rem" />}
             >
-              Salvar
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
+
+
           </>
         )}
       </DialogActions>

@@ -1,0 +1,7 @@
+POST http://localhost:8000/youtube-links
+Content-Type: application/json
+
+{
+  "title": "Instalação do Visual Studio Code",
+  "description": "Ambiente para C# e .NET"
+}

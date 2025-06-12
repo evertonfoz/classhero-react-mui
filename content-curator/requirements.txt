@@ -2,5 +2,5 @@ fastapi
 uvicorn
 httpx
 python-dotenv
-openai
 google-api-python-client
+openai>=1.0.0
