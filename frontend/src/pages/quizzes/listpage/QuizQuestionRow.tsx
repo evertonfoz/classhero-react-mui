@@ -3,6 +3,7 @@ import { TableRow, TableCell, IconButton, Tooltip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
+
 interface QuizQuestion {
   question_id: string;
   material_id: string;

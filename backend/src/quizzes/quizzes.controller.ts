@@ -1,3 +1,5 @@
+// quizzes.controller.ts
+
 import { Controller, Get, Query } from '@nestjs/common';
 import { QuizzesService } from './quizzes.service';
 
@@ -5,12 +7,24 @@ import { QuizzesService } from './quizzes.service';
 export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {}
 
-  // GET /quizzes?material_id=xxxx
   @Get()
-  async findAllByMaterialId(@Query('material_id') material_id: string) {
-    if (!material_id) {
-      return { error: 'O parâmetro material_id é obrigatório' };
-    }
-    return this.quizzesService.findAllByMaterialId(material_id);
+  async findAll(
+    @Query('material_id') materialId: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('search') search = '',
+    @Query('status') status?: string,
+    @Query('type') type?: string,
+    @Query('level') level?: string, // <- ADICIONADO
+  ) {
+    return this.quizzesService.findAllByMaterialId(
+      materialId,
+      Number(page),
+      Number(limit),
+      search,
+      status,
+      type,
+      level, // <- ADICIONADO
+    );
   }
 }
