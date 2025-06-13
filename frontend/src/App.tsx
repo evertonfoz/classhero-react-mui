@@ -14,6 +14,7 @@ import DisciplinesFormPage from './pages/disciplines/DisciplinesFormPage';
 import ClassesListPage from './pages/classes/ClassesListPage';
 import ClassFormPage from './pages/classes/ClassFormPage';
 import ThemesPage from './pages/themes/ThemesPage';
+import QuizQuestionsListPage from './pages/quizzes/QuizQuestionsListPage';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
                 path="turmas/:classId/disciplinas/:classDisciplineId/temas"
                 element={<ThemesPage />}
               />
+              <Route path="/home/quizzes/:materialId" element={<QuizQuestionsListPage />} />
             </Route>
 
             {/* fallback */}

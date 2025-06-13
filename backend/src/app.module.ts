@@ -9,6 +9,7 @@ import { DisciplinesModule } from './disciplines/disciplines.module';
 import { ClassesModule } from './classes/classes.module';
 import { ThemesModule } from './themes/themes.module';
 import { ThemeMaterialsModule } from './theme-materials/theme-materials.module';
+import { QuizzesModule } from './quizzes/quizzes.module';
 
 
 @Module({
@@ -21,7 +22,8 @@ import { ThemeMaterialsModule } from './theme-materials/theme-materials.module';
     DisciplinesModule,
     ClassesModule,
     ThemesModule,
-    ThemeMaterialsModule
+    ThemeMaterialsModule,
+    QuizzesModule
   ],
   controllers: [AppController],
   providers: [AppService],

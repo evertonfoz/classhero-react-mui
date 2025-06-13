@@ -8,6 +8,9 @@ import type { Material } from '../../../types/material';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import MicIcon from '@mui/icons-material/Mic';
+import QuizIcon from '@mui/icons-material/Quiz';
+import { useNavigate } from 'react-router-dom';
+
 
 interface ThemeItemProps {
   themeId: string;
@@ -32,6 +35,8 @@ export default function ThemeItem({
   themeId, title, description, expanded, zebraIndex, order,
   materials, onExpand, onDeleteThemeClick, onOpenMaterialDialog, handleDeleteMaterialClick, onEditMaterial, onEditTheme
 }: ThemeItemProps) {
+    const navigate = useNavigate();
+
   return (
     <Box key={themeId} bgcolor={zebraIndex % 2 === 0 ? '#fafafa' : '#ffffff'}>
 
@@ -108,10 +113,11 @@ export default function ThemeItem({
                 minHeight={72}
                 mb={2}
                 bgcolor={index % 2 === 0 ? '#f5f5f5' : '#ffffff'}
+                sx={{ width: '100%' }}
               >
 
                 {/* Coluna da Esquerda: Título e descrição */}
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center" gap={1} flex={1}>
                   <Box
                     sx={{
                       bgcolor: '#9e9e9e', // cinza médio (mais escuro que antes)
@@ -151,9 +157,14 @@ export default function ThemeItem({
 
 
                 {/* Coluna da Direita: Tipo, link e ações */}
-                <Box display="flex" flexDirection="column" alignItems="flex-end" minWidth="180px">
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="flex-end"
+                  minWidth="180px"
+                  sx={{ flexShrink: 0 }}>
                   <Typography variant="body2">
-                    Tipo: <strong>{m.type.toUpperCase()}</strong>
+                    <strong>{m.type.toUpperCase()}</strong>
                   </Typography>
 
                   {/* Grupo de botões para links */}
@@ -188,20 +199,32 @@ export default function ThemeItem({
                     )}
 
 
-                   {m.type === 'podcast' && m.url && (
-  <Tooltip title="Ouvir Podcast">
-    <IconButton
-      size="small"
-      href={m.url}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-        <MicIcon sx={{ color: '#1976d2', fontSize: 24 }} /> {/* Azul padrão MUI */}
-    </IconButton>
-  </Tooltip>
-)}
+                    {m.type === 'podcast' && m.url && (
+                      <Tooltip title="Ouvir Podcast">
+                        <IconButton
+                          size="small"
+                          href={m.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <MicIcon sx={{ color: '#1976d2', fontSize: 24 }} /> {/* Azul padrão MUI */}
+                        </IconButton>
+                      </Tooltip>
+                    )}
 
-
+                    {m.type === 'quiz' && (
+                      <Tooltip title="Responder Quiz">
+                        <IconButton
+                          size="small"
+                          component="a"
+                          onClick={() => navigate(`/home/quizzes/${m.material_id}`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <QuizIcon sx={{ color: '#1976d2' }} fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
 
 
                     {m.youtube_pt_url && (

@@ -23,6 +23,8 @@ export default function PaginatedTable<T>({
   onPageChange,
   minWidth,
 }: PaginatedTableProps<T>) {
+  console.log('PaginatedTable items:', items, '| loading:', loading, '| currentPage:', currentPage, '| totalPages:', totalPages);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={4}>
