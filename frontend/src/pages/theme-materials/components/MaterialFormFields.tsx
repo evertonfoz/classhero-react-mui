@@ -38,8 +38,11 @@ export default function MaterialFormFields({
   onGenerateLinks,
   removeExistingFile,
 }: Props) {
+  const isQuiz = material.type === 'quiz';
+
   return (
     <>
+      {/* Ordem sempre visível */}
       <TextField
         label="Ordem"
         value={material.order}
@@ -50,26 +53,32 @@ export default function MaterialFormFields({
         disabled={isBusy}
       />
 
-      <TextField
-        label="Nome"
-        value={material.name}
-        onChange={(e) => onMaterialChange({ name: e.target.value })}
-        fullWidth
-        margin="normal"
-        disabled={isBusy}
-      />
+      {/* Exibe Nome e Descrição apenas se NÃO for Quiz */}
+      {!isQuiz && (
+        <>
+          <TextField
+            label="Nome"
+            value={material.name}
+            onChange={(e) => onMaterialChange({ name: e.target.value })}
+            fullWidth
+            margin="normal"
+            disabled={isBusy}
+          />
 
-      <TextField
-        label="Descrição"
-        value={material.description}
-        onChange={(e) => onMaterialChange({ description: e.target.value })}
-        fullWidth
-        multiline
-        rows={2}
-        margin="normal"
-        disabled={isBusy}
-      />
+          <TextField
+            label="Descrição"
+            value={material.description}
+            onChange={(e) => onMaterialChange({ description: e.target.value })}
+            fullWidth
+            multiline
+            rows={2}
+            margin="normal"
+            disabled={isBusy}
+          />
+        </>
+      )}
 
+      {/* Tipo e upload PDF permanecem normalmente */}
       <MaterialTypeFields
         type={material.type}
         url={material.url}
@@ -88,7 +97,8 @@ export default function MaterialFormFields({
         }}
       />
 
-      {material.type !== 'pdf' && material.type !== '' && (
+      {/* Outros campos (YouTube, etc) só aparecem se não for quiz ou pdf */}
+      {material.type !== 'pdf' && material.type !== 'quiz' && material.type !== '' && (
         <Box mt={2}>
           <YoutubeLinkField
             label="URL"
@@ -120,7 +130,6 @@ export default function MaterialFormFields({
               disabled={isBusy}
             />
           </Box>
-
           <Box mt={2}>
             <YoutubeLinkField
               label="YouTube (Inglês)"

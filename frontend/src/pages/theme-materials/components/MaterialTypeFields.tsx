@@ -3,7 +3,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField,
   Button,
   Typography,
 } from '@mui/material';
@@ -60,9 +59,9 @@ export default function MaterialTypeFields({
         </Select>
       </FormControl>
 
-      
 
-      {type === 'pdf' && (
+
+      {['pdf', 'quiz'].includes(type) && (
         <>
           {(file || url) && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
@@ -89,6 +88,7 @@ export default function MaterialTypeFields({
           </Button>
         </>
       )}
+
     </>
   );
 }

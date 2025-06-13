@@ -110,15 +110,20 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
     : hasAnyValue;
 
   const isFormValid =
-    material.name.trim() !== '' &&
-    material.description.trim() !== '' &&
-    material.type !== '' &&
-    material.order.trim() !== '' &&
-    (material.type !== 'pdf'
-      ? true
-      : isEditing
-        ? !removeExistingFile || !!material.file
-        : !!material.file);
+    material.type === 'quiz'
+      ? material.order.trim() !== '' && !!material.file
+      : (
+        material.name.trim() !== '' &&
+        material.description.trim() !== '' &&
+        material.type !== '' &&
+        material.order.trim() !== '' &&
+        (material.type !== 'pdf'
+          ? true
+          : isEditing
+            ? !removeExistingFile || !!material.file
+            : !!material.file)
+      );
+
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -162,7 +167,7 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
             title: material.name,
             description: material.description,
             type: material.type,
-            content: material.type !== 'pdf' ? material.url : initialData.content,
+            content: material.type !== 'pdf' && material.type !== 'quiz' ? material.url : initialData.content,
             order: material.order,
           };
 
@@ -187,14 +192,21 @@ export default function MaterialFormDialog({ open, onClose, themeId, onSuccess, 
         const formData = new FormData();
         formData.append('theme_id', themeId);
         formData.append('type', material.type);
-        formData.append('title', material.name);
-        formData.append('description', material.description);
-        formData.append('order', material.order);
 
-        if (material.type !== 'pdf') {
-          formData.append('content', material.url);
+        if (material.type === 'quiz') {
+          formData.append('title', 'QUIZ: Gerar automaticamente');
+          formData.append('description', 'QUIZ: Gerar automaticamente');
+        } else {
+          formData.append('title', material.name);
+          formData.append('description', material.description || '');
         }
 
+        formData.append('order', material.order);
+
+        // envio de conteúdo
+        if (!['pdf', 'quiz'].includes(material.type)) {
+          formData.append('content', material.url);
+        }
 
         formData.append('youtube_pt_url', material.youtube_pt_url || '');
         formData.append('youtube_en_url', material.youtube_en_url || '');
