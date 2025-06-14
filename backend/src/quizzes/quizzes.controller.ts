@@ -1,6 +1,6 @@
 // quizzes.controller.ts
 
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QuizzesService } from './quizzes.service';
 
 @Controller('quizzes')
@@ -26,5 +26,10 @@ export class QuizzesController {
       type,
       level, // <- ADICIONADO
     );
+  }
+
+   @Get(':questionId')
+  async findOne(@Param('questionId') questionId: string) {
+    return this.quizzesService.findOneById(questionId);
   }
 }

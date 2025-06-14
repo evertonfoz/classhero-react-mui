@@ -8,6 +8,7 @@ import {
     TableRow,
     Tooltip,
     IconButton,
+    Fab,
 } from '@mui/material';
 import PageContainer from '../../components/ui/PageContainer';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -18,6 +19,7 @@ import PaginatedTable from '../../components/ui/PaginatedTable';
 import { useNavigate } from 'react-router-dom';
 import { Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 
 interface QuizQuestion {
@@ -250,7 +252,7 @@ export default function QuizQuestionsListPage() {
 
                         <TableCell sx={{ py: 1.2 }}>{question.level}</TableCell>
                         <TableCell sx={{ py: 1.2 }}>{statusLabels[question.status] || question.status}</TableCell>
-                        <TableCell align="center" sx={{ py: 1.2,minWidth: 44, maxWidth: 48  }}>
+                        <TableCell align="center" sx={{ py: 1.2, minWidth: 44, maxWidth: 48 }}>
                             <Tooltip title="Visualizar">
                                 <IconButton
                                     size="small"
@@ -271,6 +273,21 @@ export default function QuizQuestionsListPage() {
                 onPageChange={setCurrentPage}
                 minWidth={isMobile ? 280 : 500}
             />
+
+            <Fab
+                color="primary"
+                aria-label="voltar"
+                sx={{
+                    position: 'fixed',
+                    bottom: isMobile ? 16 : 32,
+                    right: isMobile ? 16 : 40,
+                    zIndex: 1200, // acima do conteúdo
+                    boxShadow: 3,
+                }}
+                onClick={() => navigate(-1)}
+            >
+                <ArrowBackIcon />
+            </Fab>
 
         </PageContainer>
     );

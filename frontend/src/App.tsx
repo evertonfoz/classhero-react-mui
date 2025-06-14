@@ -15,6 +15,7 @@ import ClassesListPage from './pages/classes/ClassesListPage';
 import ClassFormPage from './pages/classes/ClassFormPage';
 import ThemesPage from './pages/themes/ThemesPage';
 import QuizQuestionsListPage from './pages/quizzes/QuizQuestionsListPage';
+import QuizQuestionViewPage from './pages/quizzes/question/QuizQuestionViewPage';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
                 element={<ThemesPage />}
               />
               <Route path="/home/quizzes/:materialId" element={<QuizQuestionsListPage />} />
+              <Route path="/home/quizzes/:materialId/visualizar/:questionId" element={<QuizQuestionViewPage />} />
             </Route>
 
             {/* fallback */}

@@ -1,6 +1,6 @@
 // quizzes.service.ts
 
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 
@@ -63,5 +63,28 @@ export class QuizzesService {
       data: data ?? [],
       totalPages: Math.ceil((count ?? 0) / limit) || 1,
     };
+  }
+
+  async findOneById(questionId: string) {
+    const { data, error } = await this.supabase
+      .from('quiz_questions')
+      .select('*')
+      .eq('question_id', questionId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Not found (PostgREST code)
+        throw new NotFoundException('Questão não encontrada');
+      }
+      console.error('Erro ao buscar questão:', error.message);
+      throw new InternalServerErrorException('Erro ao buscar questão');
+    }
+
+    if (!data) {
+      throw new NotFoundException('Questão não encontrada');
+    }
+
+    return data;
   }
 }
