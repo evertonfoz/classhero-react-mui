@@ -125,23 +125,25 @@ export default function QuizQuestionViewPage() {
 
                 {/* Card principal, centralizado vertical/horizontal */}
                 <Card
-                    sx={{
-                        width: '100%',
-                        maxWidth: 740,
-                        minHeight: isMobile ? 'unset' : 400,
-                        mx: isMobile ? 1 : 3,
-                        borderRadius: 4,
-                        boxShadow: 8,
-                        background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)',
-                        p: isMobile ? 2 : 3,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'stretch',
-                        position: 'relative', // <- para o botão ficar absoluto dentro do Card!
-                    }}
-                >
+  sx={{
+    pr: 10,
+    width: 'fit-content',         // <-- Se quiser adaptar ao conteúdo
+    maxWidth: '90vw', 
+    minHeight: simulando ? 320 : 400,
+    mx: isMobile ? 1 : 3,
+    borderRadius: 4,
+    boxShadow: 8,
+    background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)',
+    p: isMobile ? 2 : 3,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    position: 'relative',
+    transition: 'max-width 0.3s, min-height 0.3s', // anima uma transição sutil
+  }}
+>
 
-                    <CardContent sx={{ p: 0 }}>
+                    <CardContent sx={{ p: 0 , pr: !simulando ? { xs: 7, sm: 10 } : 0 }}>
                         {/* Header: tipo e status + ações */}
                         <QuizQuestionHeader
                             type={question.type}
@@ -269,35 +271,7 @@ export default function QuizQuestionViewPage() {
 
                     )}
 
-                    {simulando && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 24,
-                                right: 24,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
-                        >
-                            <Fab
-                                color="primary"
-                                aria-label="Encerrar teste"
-                                onClick={() => setSimulando(false)}
-                                sx={{
-                                    boxShadow: 4,
-                                    width: 56,
-                                    height: 56,
-                                }}
-                            >
-                                <CloseIcon sx={{ fontSize: 32 }} />
-                            </Fab>
-                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
-                                Encerrar
-                            </Typography>
-                        </Box>
-                    )}
+                    
 
 
                 </Card>
@@ -334,6 +308,35 @@ export default function QuizQuestionViewPage() {
                 </Fade>
 
                 {/* FAB para voltar - canto inferior direito, sempre visível */}
+                {simulando && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: 24,
+                                right: 24,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <Fab
+                                color="primary"
+                                aria-label="Encerrar teste"
+                                onClick={() => setSimulando(false)}
+                                sx={{
+                                    boxShadow: 4,
+                                    width: 56,
+                                    height: 56,
+                                }}
+                            >
+                                <CloseIcon sx={{ fontSize: 32 }} />
+                            </Fab>
+                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
+                                Encerrar
+                            </Typography>
+                        </Box>
+                    )}
                 {!simulando && (
                     <Fab
                         color="primary"
