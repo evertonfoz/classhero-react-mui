@@ -8,22 +8,20 @@ import {
     useMediaQuery,
     useTheme,
     Fade,
-    IconButton,
-    Tooltip,
     Fab,
     Button,
+    Tooltip,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VerifiedIcon from '@mui/icons-material/Verified';
 import QuizIcon from '@mui/icons-material/Quiz';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import QuestionOptions from './components/QuestionOptions';
 import GuidanceSection from './components/GuidanceSection';
-import QuizLottieFromUrl from './components/QuizLottieFromUrl';
+import QuizQuestionHeader from './components/QuizQuestionHeader';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CloseIcon from '@mui/icons-material/Close';
 // (Você pode importar ícones/ilustrações extras conforme preferir)
 
 interface QuizQuestion {
@@ -64,6 +62,7 @@ export default function QuizQuestionViewPage() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
+    const [simulando, setSimulando] = useState(false);
 
     // Fetch question
     useEffect(() => {
@@ -122,6 +121,8 @@ export default function QuizQuestionViewPage() {
                     position: 'relative',
                 }}
             >
+
+
                 {/* Card principal, centralizado vertical/horizontal */}
                 <Card
                     sx={{
@@ -131,103 +132,29 @@ export default function QuizQuestionViewPage() {
                         mx: isMobile ? 1 : 3,
                         borderRadius: 4,
                         boxShadow: 8,
-                        background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)', // gradiente só no Card
+                        background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)',
                         p: isMobile ? 2 : 3,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'stretch',
+                        position: 'relative', // <- para o botão ficar absoluto dentro do Card!
                     }}
                 >
+
                     <CardContent sx={{ p: 0 }}>
                         {/* Header: tipo e status + ações */}
-<Box
-  display="flex"
-  alignItems="center"
-  gap={2}
-  mb={2}
-  sx={{
-    minHeight: 72, // ou altura do seu Lottie
-    width: '100%',
-  }}
->
-  {/* Lottie maior, alinhado à esquerda */}
-  <Box
-    sx={{
-      width: 72,
-      height: 72,
-      minWidth: 72,
-      minHeight: 72,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-      mr: 1,
-    }}
-  >
-    <QuizLottieFromUrl
-      url="/lotties/true_false.json"
-      style={{ width: 72, height: 72 }}
-    />
-  </Box>
-  {/* Centraliza bloco do título+chips+ações em relação ao Lottie */}
-  <Box
-    display="flex"
-    alignItems="center"
-    width="100%"
-    minHeight={72}
-    sx={{
-      overflow: 'hidden',
-    }}
-  >
-    <Typography
-      variant={isMobile ? "h6" : "h5"}
-      fontWeight="bold"
-      color="primary"
-      sx={{
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        maxWidth: isMobile ? 140 : 220,
-        minHeight: 0,
-      }}
-    >
-      {typeLabels[question.type] || question.type}
-    </Typography>
-    <Chip
-      label={question.level}
-      sx={{
-        ml: 1,
-        bgcolor: levelColors[question.level] || '#bdbdbd',
-        color: '#fff',
-        fontWeight: 'bold',
-        flexShrink: 0,
-      }}
-    />
-    <Chip
-      label={question.status === "draft" ? "Rascunho" : question.status}
-      color={question.status === "draft" ? "default" : "success"}
-      sx={{ ml: 1, flexShrink: 0 }}
-    />
-    <Box flex={1} />
-    {/* Ações */}
-    <Tooltip title="Editar">
-      <IconButton onClick={() => navigate(`/home/quizzes/${materialId}/editar/${question.question_id}`)}>
-        <EditIcon />
-      </IconButton>
-    </Tooltip>
-    <Tooltip title="Validar questão">
-      <IconButton color="success">
-        <VerifiedIcon />
-      </IconButton>
-    </Tooltip>
-    <Tooltip title="Excluir">
-      <IconButton color="error">
-        <DeleteIcon />
-      </IconButton>
-    </Tooltip>
-  </Box>
-</Box>
-
+                        <QuizQuestionHeader
+                            type={question.type}
+                            level={question.level}
+                            status={question.status}
+                            materialId={materialId}
+                            questionId={question.question_id}
+                            onEdit={() => navigate(`/home/quizzes/${materialId}/editar/${question.question_id}`)}
+                            onValidate={() => { /* ação de validação */ }}
+                            onDelete={() => { /* ação de exclusão */ }}
+                            lottieUrl="/lotties/true_false.json" // ou dinâmico
+                            hideActions={simulando}
+                        />
                         {/* Enunciado */}
                         <Typography variant={isMobile ? "h6" : "h5"} mb={5} fontWeight="bold">
                             {question.question}
@@ -264,50 +191,115 @@ export default function QuizQuestionViewPage() {
 
                         {question.type === 'true_false' && (
                             <Box display="flex" gap={3} mt={2} justifyContent="center">
-  <Button
-    variant="contained"
-    sx={{
-      minWidth: 120,
-      fontWeight: 'bold',
-      borderRadius: 2,
-      background: '#43a047', // verde
-      color: '#fff',
-      fontSize: 18,
-      border: '2px solid #388e3c',
-      boxShadow: '0 2px 10px #c8e6c9',
-      textTransform: 'none',
-      '&:hover': { background: '#2e7d32' },
-    }}
-  >
-    Verdadeiro
-  </Button>
-  <Button
-    variant="contained"
-    sx={{
-      minWidth: 120,
-      fontWeight: 'bold',
-      borderRadius: 2,
-      background: '#e53935', // vermelho
-      color: '#fff',
-      fontSize: 18,
-      border: '2px solid #b71c1c',
-      boxShadow: '0 2px 10px #ffcdd2',
-      textTransform: 'none',
-      '&:hover': { background: '#b71c1c' },
-    }}
-  >
-    Falso
-  </Button>
-</Box>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        minWidth: 120,
+                                        fontWeight: 'bold',
+                                        borderRadius: 2,
+                                        background: '#43a047', // verde
+                                        color: '#fff',
+                                        fontSize: 18,
+                                        border: '2px solid #388e3c',
+                                        boxShadow: '0 2px 10px #c8e6c9',
+                                        textTransform: 'none',
+                                        '&:hover': { background: '#2e7d32' },
+                                    }}
+                                >
+                                    Verdadeiro
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        minWidth: 120,
+                                        fontWeight: 'bold',
+                                        borderRadius: 2,
+                                        background: '#e53935', // vermelho
+                                        color: '#fff',
+                                        fontSize: 18,
+                                        border: '2px solid #b71c1c',
+                                        boxShadow: '0 2px 10px #ffcdd2',
+                                        textTransform: 'none',
+                                        '&:hover': { background: '#b71c1c' },
+                                    }}
+                                >
+                                    Falso
+                                </Button>
+                            </Box>
                         )}
 
                         {/* Outros tipos... adapte conforme necessário */}
 
-                        <GuidanceSection
-                            guidanceOnError={question.guidance_on_error}
-                            guidanceOnSuccess={question.guidance_on_success}
-                        />
+                        {!simulando && (
+                            <GuidanceSection
+                                guidanceOnError={question.guidance_on_error}
+                                guidanceOnSuccess={question.guidance_on_success}
+                            />
+                        )}
                     </CardContent>
+
+                    {!simulando && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: 16,
+                                right: 16,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <Fab
+                                color="primary"
+                                aria-label="Testar como aluno"
+                                onClick={() => setSimulando(true)}
+                                sx={{
+                                    boxShadow: 4,
+                                    width: 56,
+                                    height: 56,
+                                }}
+                            >
+                                <PlayArrowIcon sx={{ fontSize: 32 }} />
+                            </Fab>
+                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
+                                Testar
+                            </Typography>
+                        </Box>
+
+                    )}
+
+                    {simulando && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: 24,
+                                right: 24,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <Fab
+                                color="primary"
+                                aria-label="Encerrar teste"
+                                onClick={() => setSimulando(false)}
+                                sx={{
+                                    boxShadow: 4,
+                                    width: 56,
+                                    height: 56,
+                                }}
+                            >
+                                <CloseIcon sx={{ fontSize: 32 }} />
+                            </Fab>
+                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
+                                Encerrar
+                            </Typography>
+                        </Box>
+                    )}
+
+
                 </Card>
 
                 {/* Badge gamificado ou animação (futuro: confete, mascote, etc.) */}
@@ -325,31 +317,40 @@ export default function QuizQuestionViewPage() {
                             opacity: 0.9,
                         }}
                     >
+                        {!simulando && (
+  <Fade in timeout={1200}>
+                            
                         <Chip
                             icon={<QuizIcon />}
                             label={`Pergunta já foi usada ${question.times_used} vezes`}
                             color="primary"
                             sx={{ fontWeight: 'bold', fontSize: isMobile ? 13 : 15, px: 2, mb: 1 }}
                         />
+                        </Fade>
+                        )}
+                        {/* Aqui você pode adicionar uma animação ou mascote, se quiser */}
                         {/* Mascote/efeito se quiser */}
                     </Box>
                 </Fade>
 
                 {/* FAB para voltar - canto inferior direito, sempre visível */}
-                <Fab
-                    color="primary"
-                    aria-label="voltar"
-                    sx={{
-                        position: 'fixed',
-                        bottom: isMobile ? 24 : 40,
-                        right: isMobile ? 24 : 40,
-                        zIndex: 1201,
-                        boxShadow: 4,
-                    }}
-                    onClick={() => navigate(-1)}
-                >
-                    <ArrowBackIcon />
-                </Fab>
+                {!simulando && (
+                    <Fab
+                        color="primary"
+                        aria-label="voltar"
+                        sx={{
+                            position: 'fixed',
+                            bottom: isMobile ? 24 : 40,
+                            right: isMobile ? 24 : 40,
+                            zIndex: 1201,
+                            boxShadow: 4,
+                        }}
+                        onClick={() => navigate(-1)}
+                    >
+                        <ArrowBackIcon />
+                    </Fab>
+                )}
+
             </Box>
         </Fade>
     );
