@@ -107,11 +107,13 @@ export default function QuizQuestionHeader({
             flexShrink: 0,
           }}
         />
+       {!hideActions && (
         <Chip
           label={status === "draft" ? "Rascunho" : status}
           color={status === "draft" ? "default" : "success"}
           sx={{ ml: 1, flexShrink: 0 }}
         />
+      )}
         <Box flex={1} />
         {/* Ações, somente se não estiver ocultando */}
         {!hideActions && (

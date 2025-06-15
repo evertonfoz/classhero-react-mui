@@ -10,7 +10,6 @@ import {
     Fade,
     Fab,
     Button,
-    Tooltip,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -20,8 +19,9 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import QuestionOptions from './components/QuestionOptions';
 import GuidanceSection from './components/GuidanceSection';
 import QuizQuestionHeader from './components/QuizQuestionHeader';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CloseIcon from '@mui/icons-material/Close';
+import SimulationFab from './components/SimulationFab';
+import CelebrationLottie from './components/CelebrationLottie';
+import { motion } from "framer-motion";
 // (Você pode importar ícones/ilustrações extras conforme preferir)
 
 interface QuizQuestion {
@@ -55,7 +55,23 @@ const levelColors: Record<string, string> = {
     avançado: '#E53935',
 };
 
+
 export default function QuizQuestionViewPage() {
+
+    const mensagensErro = [
+        "Faz parte do processo! Na próxima questão, você vai arrasar!",
+        "Errar é sinal de quem está tentando — parabéns pela coragem!",
+        "O importante é aprender! Bora pra próxima?",
+        "Ninguém acerta tudo sempre. Continue mandando ver!",
+        "É assim que se aprende: bora seguir em frente!",
+        "Você está no caminho certo, não desanime!",
+        "Isso acontece até com os melhores. Próxima questão!",
+        "Missão não cumprida… mas só dessa vez!",
+        "Continue focado! Cada erro te deixa mais perto do acerto.",
+        "Você está evoluindo, mesmo quando erra!",
+    ];
+
+
     const { questionId, materialId } = useParams();
     const [loading, setLoading] = useState(true);
     const [question, setQuestion] = useState<QuizQuestion | null>(null);
@@ -63,6 +79,17 @@ export default function QuizQuestionViewPage() {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
     const [simulando, setSimulando] = useState(false);
+    const [respostaAluno, setRespostaAluno] = useState<"Verdadeiro" | "Falso" | null>(null);
+
+    const getCorrectAnswers = () => {
+        try {
+            return question?.correct_answers ? JSON.parse(question.correct_answers) : [];
+        } catch {
+            return [];
+        }
+    };
+    const isRespostaCorreta = respostaAluno && getCorrectAnswers().includes(respostaAluno);
+
 
     // Fetch question
     useEffect(() => {
@@ -73,18 +100,21 @@ export default function QuizQuestionViewPage() {
             .finally(() => setLoading(false));
     }, [questionId]);
 
+    const handleStartSimulacao = () => {
+        setSimulando(true);
+        setRespostaAluno(null); // sempre começa limpo!
+    };
+
+    // Função para encerrar simulação (zera tudo)
+    const handleEndSimulacao = () => {
+        setSimulando(false);
+        setRespostaAluno(null); // limpa ao sair!
+    };
+
     // Helper: parse options (stringified array)
     const getOptions = () => {
         try {
             return question?.options ? JSON.parse(question.options) : [];
-        } catch {
-            return [];
-        }
-    };
-
-    const getCorrectAnswers = () => {
-        try {
-            return question?.correct_answers ? JSON.parse(question.correct_answers) : [];
         } catch {
             return [];
         }
@@ -125,25 +155,25 @@ export default function QuizQuestionViewPage() {
 
                 {/* Card principal, centralizado vertical/horizontal */}
                 <Card
-  sx={{
-    pr: 10,
-    width: 'fit-content',         // <-- Se quiser adaptar ao conteúdo
-    maxWidth: '90vw', 
-    minHeight: simulando ? 320 : 400,
-    mx: isMobile ? 1 : 3,
-    borderRadius: 4,
-    boxShadow: 8,
-    background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)',
-    p: isMobile ? 2 : 3,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    position: 'relative',
-    transition: 'max-width 0.3s, min-height 0.3s', // anima uma transição sutil
-  }}
->
+                    sx={{
+                        pr: 10,
+                        width: 'fit-content',         // <-- Se quiser adaptar ao conteúdo
+                        maxWidth: '90vw',
+                        minHeight: simulando ? 320 : 400,
+                        mx: isMobile ? 1 : 3,
+                        borderRadius: 4,
+                        boxShadow: 8,
+                        background: 'linear-gradient(120deg,#fff,#e0f7fa 90%)',
+                        p: isMobile ? 2 : 3,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        position: 'relative',
+                        transition: 'max-width 0.3s, min-height 0.3s', // anima uma transição sutil
+                    }}
+                >
 
-                    <CardContent sx={{ p: 0 , pr: !simulando ? { xs: 7, sm: 10 } : 0 }}>
+                    <CardContent sx={{ p: 0, pr: !simulando ? { xs: 7, sm: 10 } : 0 }}>
                         {/* Header: tipo e status + ações */}
                         <QuizQuestionHeader
                             type={question.type}
@@ -192,43 +222,98 @@ export default function QuizQuestionViewPage() {
                         )}
 
                         {question.type === 'true_false' && (
-                            <Box display="flex" gap={3} mt={2} justifyContent="center">
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        minWidth: 120,
-                                        fontWeight: 'bold',
-                                        borderRadius: 2,
-                                        background: '#43a047', // verde
-                                        color: '#fff',
-                                        fontSize: 18,
-                                        border: '2px solid #388e3c',
-                                        boxShadow: '0 2px 10px #c8e6c9',
-                                        textTransform: 'none',
-                                        '&:hover': { background: '#2e7d32' },
-                                    }}
-                                >
-                                    Verdadeiro
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        minWidth: 120,
-                                        fontWeight: 'bold',
-                                        borderRadius: 2,
-                                        background: '#e53935', // vermelho
-                                        color: '#fff',
-                                        fontSize: 18,
-                                        border: '2px solid #b71c1c',
-                                        boxShadow: '0 2px 10px #ffcdd2',
-                                        textTransform: 'none',
-                                        '&:hover': { background: '#b71c1c' },
-                                    }}
-                                >
-                                    Falso
-                                </Button>
+                            <Box display="flex" flexDirection="column" alignItems="center" gap={3} mt={2}>
+                                <Box display="flex" gap={3} justifyContent="center">
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            opacity: simulando ? 1 : 0.7,
+    cursor: simulando ? 'pointer' : 'not-allowed',
+    pointerEvents: simulando ? 'auto' : 'none',
+                                            minWidth: 120,
+                                            fontWeight: 'bold',
+                                            borderRadius: 2,
+                                            background: '#43a047',
+                                            color: '#fff',
+                                            fontSize: 18,
+                                            border: '2px solid #388e3c',
+                                            boxShadow: '0 2px 10px #c8e6c9',
+                                            textTransform: 'none',
+                                            '&:hover': { background: '#2e7d32' },
+                                        }}
+                                        disabled={!!respostaAluno && simulando}
+                                        onClick={() => simulando && setRespostaAluno("Verdadeiro")}
+                                    >
+                                        Verdadeiro
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            opacity: simulando ? 1 : 0.7,
+    cursor: simulando ? 'pointer' : 'not-allowed',
+    pointerEvents: simulando ? 'auto' : 'none',
+                                            minWidth: 120,
+                                            fontWeight: 'bold',
+                                            borderRadius: 2,
+                                            background: '#e53935',
+                                            color: '#fff',
+                                            fontSize: 18,
+                                            border: '2px solid #b71c1c',
+                                            boxShadow: '0 2px 10px #ffcdd2',
+                                            textTransform: 'none',
+                                            '&:hover': { background: '#b71c1c' },
+                                        }}
+                                        disabled={!!respostaAluno && simulando}
+                                        onClick={() => simulando && setRespostaAluno("Falso")}
+                                    >
+                                        Falso
+                                    </Button>
+                                </Box>
+
+                                {/* Feedback da resposta */}
+                                {simulando && respostaAluno && (
+                                    <Box mt={4} display="flex" flexDirection="column" alignItems="center" gap={2}>
+                                        {isRespostaCorreta ? (
+                                            <>
+                                                <Typography variant="h6" color="success.main" fontWeight="bold">
+                                                    Parabéns! Você acertou!
+                                                </Typography>
+                                                <CelebrationLottie style={{ width: 140, height: 140 }} />
+                                                {question.guidance_on_success && (
+                                                    <Typography color="primary" fontWeight="bold" textAlign="center" mt={2}>
+                                                        {question.guidance_on_success}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Typography variant="h6" color="error" fontWeight="bold">
+                                                    {mensagensErro[Math.floor(Math.random() * mensagensErro.length)]}
+                                                </Typography>
+                                                <CelebrationLottie style={{ width: 140, height: 140 }} error />
+                                                {question.guidance_on_error && (
+                                                    <motion.div
+                                                        animate={{ scale: [1, 1.08, 1], rotate: [0, -2, 2, 0] }}
+                                                        transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}
+                                                    >
+                                                        <Typography
+                                                            variant="h6"
+                                                            color="error"
+                                                            fontWeight="bold"
+                                                            sx={{ textAlign: "center", userSelect: "none" }}
+                                                        >
+                                                            {question.guidance_on_error}
+                                                        </Typography>
+                                                    </motion.div>
+                                                )}
+                                            </>
+
+                                        )}
+                                    </Box>
+                                )}
                             </Box>
                         )}
+
 
                         {/* Outros tipos... adapte conforme necessário */}
 
@@ -240,38 +325,13 @@ export default function QuizQuestionViewPage() {
                         )}
                     </CardContent>
 
-                    {!simulando && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 16,
-                                right: 16,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
-                        >
-                            <Fab
-                                color="primary"
-                                aria-label="Testar como aluno"
-                                onClick={() => setSimulando(true)}
-                                sx={{
-                                    boxShadow: 4,
-                                    width: 56,
-                                    height: 56,
-                                }}
-                            >
-                                <PlayArrowIcon sx={{ fontSize: 32 }} />
-                            </Fab>
-                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
-                                Testar
-                            </Typography>
-                        </Box>
+                    <SimulationFab
+                        simulando={simulando}
+                        onStart={handleStartSimulacao}
+                        onEnd={handleEndSimulacao}
+                    />
 
-                    )}
 
-                    
 
 
                 </Card>
@@ -292,15 +352,15 @@ export default function QuizQuestionViewPage() {
                         }}
                     >
                         {!simulando && (
-  <Fade in timeout={1200}>
-                            
-                        <Chip
-                            icon={<QuizIcon />}
-                            label={`Pergunta já foi usada ${question.times_used} vezes`}
-                            color="primary"
-                            sx={{ fontWeight: 'bold', fontSize: isMobile ? 13 : 15, px: 2, mb: 1 }}
-                        />
-                        </Fade>
+                            <Fade in timeout={1200}>
+
+                                <Chip
+                                    icon={<QuizIcon />}
+                                    label={`Pergunta já foi usada ${question.times_used} vezes`}
+                                    color="primary"
+                                    sx={{ fontWeight: 'bold', fontSize: isMobile ? 13 : 15, px: 2, mb: 1 }}
+                                />
+                            </Fade>
                         )}
                         {/* Aqui você pode adicionar uma animação ou mascote, se quiser */}
                         {/* Mascote/efeito se quiser */}
@@ -308,35 +368,7 @@ export default function QuizQuestionViewPage() {
                 </Fade>
 
                 {/* FAB para voltar - canto inferior direito, sempre visível */}
-                {simulando && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 24,
-                                right: 24,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
-                        >
-                            <Fab
-                                color="primary"
-                                aria-label="Encerrar teste"
-                                onClick={() => setSimulando(false)}
-                                sx={{
-                                    boxShadow: 4,
-                                    width: 56,
-                                    height: 56,
-                                }}
-                            >
-                                <CloseIcon sx={{ fontSize: 32 }} />
-                            </Fab>
-                            <Typography variant="caption" color="primary" mt={0.5} fontWeight="bold">
-                                Encerrar
-                            </Typography>
-                        </Box>
-                    )}
+
                 {!simulando && (
                     <Fab
                         color="primary"
